@@ -1,0 +1,191 @@
+version: 1
+keys:
+  # ---------- login / profile (V) ----------
+  login.password_input:            {page: login, verified: true, description: "Password box on login page (NEVER filled; used only for detection)",
+    candidates: [{kind: css, css: "input[type='password']"}]}
+  login.profile_vendor_link:       {page: login, verified: true, description: "Vendor name link on Select Profile page",
+    candidates: [{kind: role, role: link, name: "{vendor}", exact: true}, {kind: text, text: "{vendor}", exact: true}]}
+  login.edi_gateway_button:        {page: login, verified: true, description: "'EDI Gateway' button on View Profile page",
+    candidates: [{kind: css, css: "input[type='submit'][value='EDI Gateway']"}, {kind: role, role: button, name: "EDI Gateway"}]}
+
+  # ---------- top navigation (V) ----------
+  nav.inbox_tab:                   {page: inbox, verified: true, description: "INBOX tab",
+    candidates: [{kind: css, css: "a[href*='inbox.do']"}, {kind: role, role: link, name: "INBOX"}, {kind: text, text: "INBOX", exact: true}]}
+  nav.shipments_tab:               {page: inbox, verified: true, description: "SHIPMENTS tab (drafts.do)",
+    candidates: [{kind: css, css: "a[href*='drafts.do']"}, {kind: role, role: link, name: "SHIPMENTS"}]}
+
+  # ---------- inbox (V) ----------
+  inbox.document_id_input:         {page: inbox, verified: true, description: "Document ID search box",
+    candidates: [{kind: css, css: "form[name='filterinbox'] input[name='documentID']"}, {kind: css, css: "input[name='documentID']"}, {kind: label, text: "Document ID"}]}
+  inbox.search_button:             {page: inbox, verified: true, description: "Search button of inbox filter",
+    candidates: [{kind: css, css: "form[name='filterinbox'] input[type='submit'][value='Search']"}, {kind: role, role: button, name: "Search", exact: true}]}
+  inbox.results_table:             {page: inbox, verified: true, description: "Inbox results table (contains 'Document ID' header)",
+    candidates: [{kind: xpath, xpath: "//table[.//th[contains(normalize-space(),'Document ID')] or .//td[contains(normalize-space(),'Document ID')]]", nth: -1},
+                 {kind: css, css: "table:has(tr.odd), table:has(tr.even)"}]}
+  inbox.result_row:                {page: inbox, verified: true, description: "Inbox result row whose Document ID link equals {po} (any row, including stricken)",
+    candidates: [{kind: xpath, xpath: "//tr[contains(@class,'odd') or contains(@class,'even')][.//a[contains(@href,'view_order.do')][normalize-space()='{po}']]"},
+                 {kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}']]"}]}
+  inbox.result_row_active:         {page: inbox, verified: true, description: "Inbox result row for {po} that is NOT replaced (no 'stricken' class, status != REPLACED)",
+    candidates: [{kind: xpath, xpath: "//tr[(contains(@class,'odd') or contains(@class,'even')) and not(contains(@class,'stricken'))][.//a[contains(@href,'view_order.do')][normalize-space()='{po}']][not(.//td[normalize-space()='REPLACED'])]"},
+                 {kind: xpath, xpath: "//tr[not(contains(@class,'stricken'))][.//a[normalize-space()='{po}']][not(contains(.,'REPLACED'))]"}]}
+  inbox.result_link:               {page: inbox, verified: true, description: "Document ID link inside a result row",
+    candidates: [{kind: css, css: "a[href*='view_order.do']"}, {kind: role, role: link, name: "{po}", exact: true}]}
+  inbox.row_status_cell:           {page: inbox, verified: true, description: "Status cell (6th td) inside a result row",
+    candidates: [{kind: css, css: "td:nth-child(6)"}]}
+
+  # ---------- PO detail view_order.do (U) ----------
+  po.page_marker:                  {page: po_detail, verified: false, description: "Text that identifies the PO detail page: 'Purchase Order : {po}'",
+    candidates: [{kind: text, text: "Purchase Order : {po}"}, {kind: text, text: "{po}", exact: false}]}
+  po.create_new_shipment_link:     {page: po_detail, verified: false, description: "'Create New Shipment' link/button on PO detail page",
+    candidates: [{kind: role, role: link, name: "Create New Shipment"}, {kind: text, text: "Create New Shipment"},
+                 {kind: css, css: "a[href*='new_shipment.do']"}, {kind: role, role: button, name: "Create New Shipment"}]}
+  po.pdf_embed:                    {page: po_detail, verified: false, description: "Embedded PDF viewer of the PO (iframe/embed/object)",
+    candidates: [{kind: css, css: "iframe[src*='.pdf'], iframe[src*='pdf'], embed[type='application/pdf'], object[type='application/pdf'], iframe"}]}
+  po.return_to_list_link:          {page: po_detail, verified: false, description: "'<< Return To Order List' link",
+    candidates: [{kind: text, text: "Return To Order List"}, {kind: css, css: "a[href*='inbox.do']"}]}
+
+  # ---------- shipment header new_shipment.do (V) ----------
+  ship.form:                       {page: shipment, verified: true, description: "Shipment header form",
+    candidates: [{kind: css, css: "form#new_shipment"}, {kind: css, css: "form[name='new_shipment']"}]}
+  ship.web_shipment_id:            {page: shipment, verified: true, description: "Web Shipment ID (readonly, filled after Save)",
+    candidates: [{kind: css, css: "#txtWebShipmentId"}, {kind: label, text: "Web Shipment ID"}]}
+  ship.asn_shipment_id:            {page: shipment, verified: true, description: "ASN Shipment ID",
+    candidates: [{kind: css, css: "#txtASNId"}, {kind: label, text: "ASN Shipment ID"}]}
+  ship.radio_with_cartons:         {page: shipment, verified: true, description: "Radio 'Shipment With Cartons'",
+    candidates: [{kind: css, css: "input[name='CartonRadio'][value='Y']"}, {kind: label, text: "Shipment With Cartons"}]}
+  ship.shipping_type:              {page: shipment, verified: true, description: "Shipping Type select (option value 3 = Ship to DC)",
+    candidates: [{kind: css, css: "#OptShippingType"}, {kind: label, text: "Shipping Type"}]}
+  ship.shipping_date:              {page: shipment, verified: true, description: "Shipping Date text box MM/DD/YYYY",
+    candidates: [{kind: css, css: "#txtShippingDate"}, {kind: label, text: "Shipping Date"}]}
+  ship.transportation_method:      {page: shipment, verified: true, description: "Transportation Method select (O = Containerized Ocean)",
+    candidates: [{kind: css, css: "#OptTransMethod"}, {kind: label, text: "Transportation Method"}]}
+  ship.scac_code:                  {page: shipment, verified: true, description: "SCAC Code select (MAEU = MAEU-MAERSK)",
+    candidates: [{kind: css, css: "#OptSCACCode"}, {kind: label, text: "SCAC Code"}]}
+  ship.carrier:                    {page: shipment, verified: true, description: "Carrier (readonly, auto-filled)",
+    candidates: [{kind: css, css: "input[name='txtcarrier']"}, {kind: label, text: "Carrier"}]}
+  ship.bill_of_lading:             {page: shipment, verified: true, description: "Bill Of Lading",
+    candidates: [{kind: css, css: "input[name='txtBillLading']"}, {kind: label, text: "Bill Of Lading"}]}
+  ship.pro_number:                 {page: shipment, verified: true, description: "PRO Number",
+    candidates: [{kind: css, css: "input[name='txtPRONumber']"}, {kind: label, text: "PRO Number"}]}
+  ship.from_site_no:               {page: shipment, verified: true, description: "FROM Site No select",
+    candidates: [{kind: css, css: "select[name='OptSiteNO']"}]}
+  ship.from_name:                  {page: shipment, verified: true, description: "FROM Name",            candidates: [{kind: css, css: "#txtFromName"}, {kind: css, css: "input[name='txtFromName']"}]}
+  ship.from_address1:              {page: shipment, verified: true, description: "FROM Address 1",       candidates: [{kind: css, css: "#txtFromAddress1"}, {kind: css, css: "input[name='txtFromAddress1']"}]}
+  ship.from_address2:              {page: shipment, verified: true, description: "FROM Address 2",       candidates: [{kind: css, css: "input[name='txtFromAddress2']"}]}
+  ship.from_city:                  {page: shipment, verified: true, description: "FROM City",            candidates: [{kind: css, css: "#txtFromCity"}, {kind: css, css: "input[name='txtFromCity']"}]}
+  ship.from_state:                 {page: shipment, verified: true, description: "FROM State",           candidates: [{kind: css, css: "#txtFromState"}, {kind: css, css: "input[name='txtFromState']"}]}
+  ship.from_zip:                   {page: shipment, verified: true, description: "FROM Zip",             candidates: [{kind: css, css: "#txtFromZip"}, {kind: css, css: "input[name='txtFromZip']"}]}
+  ship.from_country:               {page: shipment, verified: true, description: "FROM Country select (US/CA/CN only; others via 'More..')",
+    candidates: [{kind: css, css: "#txtFromCountry"}, {kind: css, css: "select[name='txtFromCountry']"}]}
+  ship.from_country_more_link:     {page: shipment, verified: true, description: "'More..' link next to FROM Country",
+    candidates: [{kind: xpath, xpath: "//select[@id='txtFromCountry']/following::a[normalize-space()='More..'][1]"}, {kind: text, text: "More..", exact: true, nth: 1}]}
+  ship.to_site_no:                 {page: shipment, verified: true, description: "TO Site No (readonly)",
+    candidates: [{kind: css, css: "input[name='optToSiteNo']"}]}
+  ship.to_address1:                {page: shipment, verified: true, description: "TO Address 1 (readonly)", candidates: [{kind: css, css: "input[name='txtToAddress1']"}]}
+  ship.save_button:                {page: shipment, verified: true, description: "Save button of shipment header",
+    candidates: [{kind: css, css: "#saveonly"}, {kind: css, css: "input[type='submit'][value='Save']"}, {kind: role, role: button, name: "Save", exact: true}]}
+  ship.selected_pos_button:        {page: shipment, verified: true, description: "'Selected Purchase Orders >>' button",
+    candidates: [{kind: css, css: "#submit123"}, {kind: css, css: "input[value*='Selected Purchase Orders']"}, {kind: role, role: button, name: "Selected Purchase Orders >>"}]}
+  ship.submit_asn_button:          {page: shipment, verified: true, description: "Submit ASN button — existence check only, NEVER clicked",
+    candidates: [{kind: css, css: "input[name='btnSubmitASN']"}, {kind: role, role: button, name: "Submit ASN"}]}
+  ship.error_text:                 {page: shipment, verified: false, description: "Server-side validation error message area",
+    candidates: [{kind: css, css: ".error, .errors, font[color='red'], span[style*='red'], td.errorMessage"}]}
+
+  # ---------- selected purchase orders selected_pos.do (V except search tab) ----------
+  pos.form:                        {page: pos, verified: true, description: "Selected POs form", candidates: [{kind: css, css: "form[name='form1']"}]}
+  pos.tab_selected:                {page: pos, verified: true, description: "Tab 'Selected Purchase Orders'",
+    candidates: [{kind: role, role: link, name: "Selected Purchase Orders"}, {kind: text, text: "Selected Purchase Orders", exact: true}]}
+  pos.tab_search:                  {page: pos, verified: false, description: "Tab 'Search Purchase Orders'",
+    candidates: [{kind: role, role: link, name: "Search Purchase Orders"}, {kind: text, text: "Search Purchase Orders", exact: true},
+                 {kind: css, css: "a[href*='search_pos'], a[href*='searchPurchase'], a[href*='tab=search']"}]}
+  pos.search_po_input:             {page: pos, verified: false, description: "'Purchase Order No' filter box on Search tab",
+    candidates: [{kind: label, text: "Purchase Order No"}, {kind: css, css: "input[name*='purchaseOrderNo' i], input[name*='poNo' i], input[name*='orderNo' i]"},
+                 {kind: xpath, xpath: "//td[contains(normalize-space(),'Purchase Order No')]/following::input[@type='text'][1]"}]}
+  pos.search_button:               {page: pos, verified: false, description: "Search button on Search tab",
+    candidates: [{kind: css, css: "input[type='submit'][value='Search'], input[type='button'][value='Search']"}, {kind: role, role: button, name: "Search", exact: true}]}
+  pos.search_row:                  {page: pos, verified: false, description: "Search result row containing PO {po}",
+    candidates: [{kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//input[@type='checkbox']]"}]}
+  pos.search_row_checkbox:         {page: pos, verified: false, description: "Checkbox inside a search result row", candidates: [{kind: css, css: "input[type='checkbox']"}]}
+  pos.add_selected_button:         {page: pos, verified: false, description: "'Add Selected' button on Search tab",
+    candidates: [{kind: css, css: "input[value='Add Selected']"}, {kind: role, role: button, name: "Add Selected", exact: true}]}
+  pos.selected_row:                {page: pos, verified: true, description: "Row of the Selected tab for PO {po} (contains complete_shipment_N select)",
+    candidates: [{kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}']][.//select[starts-with(@name,'complete_shipment_')]]"},
+                 {kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//select]"}]}
+  pos.row_status_text:             {page: pos, verified: true, description: "Status text cell in a selected row (Available/Replaced)", candidates: [{kind: css, css: "td:nth-child(3)"}]}
+  pos.row_complete_partial_select: {page: pos, verified: true, description: "Complete/Partial select of row {row_key}",
+    candidates: [{kind: css, css: "select[name='complete_shipment_{row_key}']"}, {kind: css, css: "select[name^='complete_shipment_']", within: pos.selected_row}]}
+  pos.row_packaging_select:        {page: pos, verified: true, description: "Packaging Code select of row {row_key} (CTN25 default)",
+    candidates: [{kind: css, css: "select[name='pack_code_{row_key}']"}, {kind: css, css: "select[name^='pack_code_']", within: pos.selected_row}]}
+  pos.row_save_button:             {page: pos, verified: true, description: "Row 'Save' button (saveCarton)",
+    candidates: [{kind: css, css: "input[onclick*=\"saveCarton('saveCarton', {row_key}\"]"}, {kind: css, css: "input[value='Save']", within: pos.selected_row}]}
+  pos.row_create_carton_button:    {page: pos, verified: true, description: "Row 'Create Carton' button (insertCarton)",
+    candidates: [{kind: css, css: "input[onclick*=\"insertCarton('insertCarton', {row_key}\"]"}, {kind: css, css: "input[value='Create Carton']", within: pos.selected_row}]}
+  pos.view_detail_button:          {page: pos, verified: true, description: "'View Shipment Orders Detail' button",
+    candidates: [{kind: css, css: "input[name='poSiteShipment']"}, {kind: role, role: button, name: "View Shipment Orders Detail"}]}
+  pos.back_to_header_button:       {page: pos, verified: true, description: "'<< Back To Shipment Header'",
+    candidates: [{kind: css, css: "input[value*='Back To Shipment Header']"}, {kind: role, role: button, name: "<< Back To Shipment Header"}]}
+  pos.validate_button:             {page: pos, verified: true, description: "'Validate Shipment' (only if flow.click_validate)",
+    candidates: [{kind: css, css: "input[name='validateShipment']"}]}
+  pos.page_marker:                 {page: pos, verified: true, description: "Breadcrumb 'Web Shipment ID: NNN >> Selecting Purchase Orders'",
+    candidates: [{kind: text, text: "Selecting Purchase Orders"}]}
+
+  # ---------- carton page (U — screenshots image10–16) ----------
+  carton.page_marker:              {page: carton, verified: false, description: "Heading 'Create Carton Definition'",
+    candidates: [{kind: text, text: "Create Carton Definition"}, {kind: text, text: "Carton Definition"}]}
+  carton.carton_name_input:        {page: carton, verified: false, description: "Carton Name text box",
+    candidates: [{kind: label, text: "Carton Name"}, {kind: css, css: "input[name*='carton_definition_name' i], input[name*='cartonName' i]"}]}
+  carton.packaging_code_select:    {page: carton, verified: false, description: "Packaging Code select next to Carton Name ('Physical Container - Carton')",
+    candidates: [{kind: xpath, xpath: "//*[normalize-space()='Packaging Code']/following::select[1]"}, {kind: label, text: "Packaging Code"},
+                 {kind: css, css: "select[name*='packaging_code' i], select[name*='pack_code' i]"}]}
+  carton.tab_items_search:         {page: carton, verified: false, description: "Tab 'Search Items'",
+    candidates: [{kind: role, role: link, name: "Search Items"}, {kind: text, text: "Search Items", exact: true}]}
+  carton.tab_items_selected:       {page: carton, verified: false, description: "Tab 'Selected Items'",
+    candidates: [{kind: role, role: link, name: "Selected Items"}, {kind: text, text: "Selected Items", exact: true}]}
+  carton.items_section:            {page: carton, verified: false, description: "Container of the items table (contains header 'Sku/Upc/Prepack' or 'SKU No')",
+    candidates: [{kind: xpath, xpath: "//table[.//th[contains(.,'Sku') or contains(.,'SKU')] or .//td[contains(.,'Sku/Upc/Prepack') or contains(.,'SKU No')]][last()]"}]}
+  carton.items_search_row:         {page: carton, verified: false, description: "Search Items result row with a checkbox (PO group row '{item_label}' or first row)",
+    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='checkbox']][contains(.,'{item_label}')]"}, {kind: xpath, xpath: "//tr[.//input[@type='checkbox']][.//td[contains(.,'PO{master_po}')]]"},
+                 {kind: xpath, xpath: "(//table[.//th[contains(.,'SKU')] or .//td[contains(.,'SKU No')]]//tr[.//input[@type='checkbox']])[1]"}]}
+  carton.items_add_selected:       {page: carton, verified: false, description: "'Add Selected' button under Search Items table",
+    candidates: [{kind: xpath, xpath: "(//table[.//*[contains(.,'SKU')]]/following::input[@value='Add Selected'])[1]"}, {kind: css, css: "input[value='Add Selected']", nth: 0}]}
+  carton.item_po_row:              {page: carton, verified: false, description: "Selected Items row for '{item_label}' (has Qty Per Carton input)",
+    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='text']][contains(.,'{item_label}')]"}, {kind: xpath, xpath: "//tr[.//input[@type='text']][contains(.,'PO{master_po}')]"}]}
+  carton.item_qty_per_carton_input: {page: carton, verified: false, description: "Qty Per Carton input inside item row",
+    candidates: [{kind: css, css: "input[type='text']", within: carton.item_po_row}]}
+  carton.item_qty_ordered_cell:    {page: carton, verified: false, description: "Qty Ordered cell inside item row (td immediately before the input's td)",
+    candidates: [{kind: xpath, xpath: ".//td[.//input[@type='text']]/preceding-sibling::td[1]", within: carton.item_po_row}]}
+  carton.item_um_cell:             {page: carton, verified: false, description: "Unit of Measure cell inside item row (AS/EA, last td)",
+    candidates: [{kind: xpath, xpath: ".//td[last()]", within: carton.item_po_row}]}
+  carton.item_prepack_row:         {page: carton, verified: false, description: "Prepack sub-row directly after the item row (no checkbox, no input, UM EA)",
+    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='text']][contains(.,'{item_label}')]/following-sibling::tr[1][not(.//input)][contains(.,'EA')]"}]}
+  carton.tab_sites_search:         {page: carton, verified: false, description: "Tab 'Search Sites'",
+    candidates: [{kind: role, role: link, name: "Search Sites"}, {kind: text, text: "Search Sites", exact: true}]}
+  carton.sites_search_row:         {page: carton, verified: false, description: "Search Sites result row with checkbox (site {site_no} or first)",
+    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='checkbox']][.//td[normalize-space()='{site_no}']]"},
+                 {kind: xpath, xpath: "(//table[.//*[contains(.,'Zip Code')]]//tr[.//input[@type='checkbox']])[1]"}]}
+  carton.sites_add_selected:       {page: carton, verified: false, description: "'Add Selected' button under Search Sites table",
+    candidates: [{kind: xpath, xpath: "(//table[.//*[contains(.,'Zip Code')]]/following::input[@value='Add Selected'])[1]"}, {kind: css, css: "input[value='Add Selected']", nth: -1}]}
+  carton.site_row:                 {page: carton, verified: false, description: "Selected Sites row (has Cartons Per Site input)",
+    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='text']][.//a[normalize-space()='{site_no}'] or .//td[normalize-space()='{site_no}']]"},
+                 {kind: xpath, xpath: "(//table[.//*[contains(.,'Cartons')]]//tr[.//input[@type='text']])[1]"}]}
+  carton.site_cartons_per_site_input: {page: carton, verified: false, description: "Cartons Per Site input inside site row",
+    candidates: [{kind: css, css: "input[type='text']", within: carton.site_row}]}
+  carton.save_button:              {page: carton, verified: false, description: "Bottom 'Save' button of carton page",
+    candidates: [{kind: xpath, xpath: "(//input[@type='button' or @type='submit'][@value='Save'])[last()]"}, {kind: role, role: button, name: "Save", exact: true, nth: -1}]}
+  carton.back_to_po_button:        {page: carton, verified: false, description: "'<< Back to Purchase Order'",
+    candidates: [{kind: css, css: "input[value*='Back to Purchase Order']"}, {kind: role, role: button, name: "<< Back to Purchase Order"}]}
+
+  # ---------- weight page po_site_shipment.do (V) ----------
+  weight.form:                     {page: weight, verified: true, description: "Weight page form", candidates: [{kind: css, css: "form[name='po_site_shipment']"}]}
+  weight.orderperpage_select:      {page: weight, verified: true, description: "Orders per page select (set to All = 100000)",
+    candidates: [{kind: css, css: "form[name='po_site_shipment'] select[name='orderperpage']"}, {kind: css, css: "select[name='orderperpage']"}]}
+  weight.row:                      {page: weight, verified: true, description: "Row for PO {po} containing weight input",
+    candidates: [{kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//input[starts-with(@name,'editedSiteWgtqu')]]"}]}
+  weight.row_weight_input:         {page: weight, verified: true, description: "WEIGHT input for row {row_key}",
+    candidates: [{kind: css, css: "input[name='editedSiteWgtqu{row_key}']"}, {kind: css, css: "input[name^='editedSiteWgtqu']", within: weight.row}]}
+  weight.row_um_select:            {page: weight, verified: true, description: "WEIGHT UM select for row {row_key}",
+    candidates: [{kind: css, css: "select[name='editedSiteWgtum{row_key}']"}, {kind: css, css: "select[name^='editedSiteWgtum']", within: weight.row}]}
+  weight.save_button:              {page: weight, verified: true, description: "Save (SaveCarton2)",
+    candidates: [{kind: css, css: "input[name='SaveCarton2']"}, {kind: role, role: button, name: "Save", exact: true}]}
+  weight.back_button:              {page: weight, verified: true, description: "'<< Back To Select Purchase Order'",
+    candidates: [{kind: css, css: "input[name='backtoorders']"}]}

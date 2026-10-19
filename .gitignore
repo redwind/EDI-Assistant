@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+.DS_Store
+# runtime data / outputs
+/data/
+*_ASN.xlsx
+*_ASN_*.xlsx
+~$*.xlsx
+packaging/version_info.txt.bak
