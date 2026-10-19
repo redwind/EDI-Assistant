@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "edi-assistant"
 version = "0.1.0"
@@ -12,6 +16,13 @@ dependencies = [
 ]
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-qt>=4.4", "pyinstaller>=6.6"]
+
+[tool.setuptools.packages.find]
+include = ["edi_assistant*"]
+
+[tool.setuptools.package-data]
+"edi_assistant.automation" = ["*.yaml", "*.js"]
+"edi_assistant.app" = ["resources/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
