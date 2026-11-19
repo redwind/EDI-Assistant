@@ -38,11 +38,15 @@ class FactoryDialog(QDialog):
         self.country.addItems(COUNTRIES)
         self.site_no = QLineEdit()
         self.aliases = QLineEdit()
+        self.code = QLineEdit()
+        self.transport = QLineEdit()
+        self.scac = QLineEdit()
         form = QFormLayout()
         for label, w in ((S.FACTORY_NAME, self.name), (S.FACTORY_ADDR1, self.addr1), (S.FACTORY_ADDR2, self.addr2),
                          (S.FACTORY_CITY, self.city), (S.FACTORY_STATE, self.state), (S.FACTORY_ZIP, self.zip),
                          (S.FACTORY_COUNTRY, self.country), (S.FACTORY_SITE_NO, self.site_no),
-                         (S.FACTORY_ALIASES, self.aliases)):
+                         (S.FACTORY_ALIASES, self.aliases), (S.FACTORY_CODE, self.code),
+                         (S.FACTORY_TRANSPORT, self.transport), (S.FACTORY_SCAC, self.scac)):
             form.addRow(label, w)
         btn_new = QPushButton(S.BTN_NEW)
         btn_new.clicked.connect(self._new)
@@ -116,6 +120,9 @@ class FactoryDialog(QDialog):
         self.country.setCurrentText(f.country or "CHINA")
         self.site_no.setText(f.site_no)
         self.aliases.setText(", ".join(f.aliases))
+        self.code.setText(f.code)
+        self.transport.setText(f.transport_method)
+        self.scac.setText(f.scac_code)
 
     def _form_value(self) -> FactoryAddress:
         return FactoryAddress(
@@ -123,7 +130,9 @@ class FactoryDialog(QDialog):
             address2=self.addr2.text().strip(), city=self.city.text().strip(), state=self.state.text().strip(),
             zip=self.zip.text().strip(), country=self.country.currentText().strip().upper() or "CHINA",
             site_no=self.site_no.text().strip(),
-            aliases=[a.strip() for a in self.aliases.text().split(",") if a.strip()])
+            aliases=[a.strip() for a in self.aliases.text().replace(";", ",").split(",") if a.strip()],
+            code=self.code.text().strip(), transport_method=self.transport.text().strip(),
+            scac_code=self.scac.text().strip().split("-", 1)[0].strip().upper())
 
     def _new(self) -> None:
         self.list.clearSelection()

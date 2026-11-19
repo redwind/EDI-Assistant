@@ -34,7 +34,10 @@ class ColumnMapping:
         return REQUIRED_BY_PROFILE.get(self.profile, REQUIRED_BY_PROFILE["packing_list"])
 
     def missing_required(self) -> list[str]:
-        return [k for k in self.required() if self.columns.get(k) is None]
+        miss = [k for k in self.required() if self.columns.get(k) is None]
+        if "quantity" in miss and self.profile == "po_tracker" and self.columns.get("edi_units") is not None:
+            miss.remove("quantity")   # tracker extracted from the PO PDF: EDI Units stands in for Order Units
+        return miss
 
     def is_complete(self) -> bool:
         return not self.missing_required()

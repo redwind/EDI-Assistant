@@ -8,7 +8,9 @@ from decimal import Decimal
 FIELD_KEYS: tuple[str, ...] = ("po", "line", "description", "packages", "quantity",
                                "gross_weight", "net_weight", "size",
                                # v2 (PO tracker)
-                               "asn", "model_no", "start_ship", "end_ship", "pack", "gw_per_carton", "container")
+                               "asn", "model_no", "start_ship", "end_ship", "pack", "gw_per_carton", "container",
+                               # v3 (tracker extracted from the PO PDF)
+                               "edi_units", "factory")
 REQUIRED_FIELDS: tuple[str, ...] = ("po", "packages", "quantity", "gross_weight")   # = packing_list requirements
 PROFILES: tuple[str, ...] = ("packing_list", "po_tracker")
 REQUIRED_BY_PROFILE: dict[str, tuple[str, ...]] = {
@@ -17,7 +19,7 @@ REQUIRED_BY_PROFILE: dict[str, tuple[str, ...]] = {
 }
 OPTIONAL_BY_PROFILE: dict[str, tuple[str, ...]] = {
     "packing_list": ("line", "description", "net_weight", "size"),
-    "po_tracker": ("asn", "model_no", "description", "container"),
+    "po_tracker": ("asn", "model_no", "description", "container", "edi_units", "factory"),
 }
 
 
@@ -83,6 +85,9 @@ class FactoryAddress:
     country: str = "CHINA"
     site_no: str = ""
     aliases: list[str] = field(default_factory=list)
+    code: str = ""                    # number at the start of the tracker file name (e.g. 2596)
+    transport_method: str = ""        # "" = use config (Containerized Ocean)
+    scac_code: str = ""               # "" = use config (MAEU)
 
 
 @dataclass(slots=True)

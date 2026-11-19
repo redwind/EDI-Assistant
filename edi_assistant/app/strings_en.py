@@ -108,6 +108,7 @@ FIELD_LABELS = {
     "size": "Size",
     "asn": "ASN #", "model_no": "Model #", "start_ship": "EDI PO Start Ship", "end_ship": "EDI PO End Ship",
     "pack": "Pack (units per carton)", "gw_per_carton": "Gross weight per carton (kg)", "container": "Container",
+    "edi_units": "EDI Units (used when Order Units is empty)", "factory": "Factory name",
 }
 
 # --- factory dialog
@@ -294,3 +295,15 @@ AUTOSTART_BLOCKED = ("Windows blocked the 'start with Windows' setting (probably
                      "The option was turned off; the app keeps working normally.")
 BROWSER_LOCKED_DOWN = ("The browser could not be started. Company policy may block Microsoft Edge automation. "
                        "Use the 'full' portable zip or run Help > System check.")
+
+# --- factory list import (Excel)
+BTN_IMPORT_FACTORIES = "Import Excel…"
+MENU_IMPORT_FACTORIES = "Import factory list (Excel)…"
+FACTORY_IMPORT_TITLE = "Choose the factory list Excel file"
+FACTORY_IMPORT_DONE = "Factory list imported from {file}:\n{added} added, {updated} updated ({total} factories in total)."
+FACTORY_IMPORT_EMPTY = "No factory rows found in {file}."
+FACTORY_IMPORT_TIP = "Load/refresh the factory list from an Excel file (one row per factory). Last file: {file}"
+FACTORY_CODE = "Code (file-name number)"
+FACTORY_TRANSPORT = "Transportation method (blank = Settings)"
+FACTORY_SCAC = "SCAC code (blank = Settings)"
+LBL_FACTORY_NOT_FOUND = "Factory in file: {text} - not in the list (import the factory list or add it)"

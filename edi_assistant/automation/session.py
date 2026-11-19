@@ -46,7 +46,8 @@ class BrowserSession:
             viewport={"width": self.cfg.viewport_width, "height": self.cfg.viewport_height},
             accept_downloads=True, args=["--disable-blink-features=AutomationControlled"])
         from edi_assistant.core import browser_detect as bd
-        plan = bd.launch_plan(self.cfg.channel, bundled=bd.bundled_chromium_available(), chromium=bd.chromium_available())
+        plan = bd.launch_plan(self.cfg.channel, bundled=bd.bundled_chromium_available(), chromium=bd.chromium_available(),
+                              edge=bd.edge_available(), chrome=bd.chrome_available())
         errors: list[tuple[str | None, str]] = []
         for channel in plan:
             try:
@@ -59,10 +60,11 @@ class BrowserSession:
         if self.context is None:
             self._stop_pw()
             edge_err = next((e for c, e in errors if c == "msedge"), None)
-            if edge_err is not None and bd.launch_failure_kind(edge_err) in ("policy", "missing"):
+            if (edge_err is not None and bd.edge_available()
+                    and bd.launch_failure_kind(edge_err) in ("policy", "missing")):
                 msg = bd.LOCKED_DOWN_MESSAGE
             else:
-                msg = 'Edge/Chromium not found or could not start. Use Tools > Install Chromium browser, or Help > System check.'
+                msg = 'Edge/Chrome/Chromium not found or could not start. Use Tools > Install Chromium browser, or Help > System check.'
             raise BrowserLaunchError(errors[-1][1] if errors else "no launch attempt", message_vi=msg)
         ctx = self.context
         ctx.set_default_timeout(self.cfg.default_timeout_ms)

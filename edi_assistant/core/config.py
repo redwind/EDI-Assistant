@@ -99,6 +99,7 @@ class UiConfig:
     language: str = "en"   # "en" | "vi" (takes effect after restart)
     last_excel_dir: str = ""
     last_factory_id: str = ""
+    last_factory_xlsx: str = ""   # last imported factory list workbook
     last_profile: str = ""   # informational
     window_geometry_b64: str = ""
     system_check_done: bool = False   # first-run System check offered

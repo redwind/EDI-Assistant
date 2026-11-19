@@ -35,6 +35,9 @@ SYNONYMS.update({
     "gw_per_carton": ["gross weight carton kg", "gross weight carton", "gw carton", "gw per carton",
                       "gross weight per carton", "carton gross weight", "gw ctn", "毛重 每箱", "trọng lượng mỗi thùng"],
     "container": ["container", "container no", "container number", "cntr", "柜号", "số container"],
+    "edi_units": ["edi units", "edi qty", "edi quantity", "po units", "buyer units"],
+    "factory": ["factory", "factory name", "vendor factory", "manufacturer", "supplier", "工厂", "nhà máy",
+                "tên nhà máy"],
 })
 # A header containing any of these tokens can never map to that field (score forced to 0).
 NEGATIVE_TOKENS: dict[str, tuple[str, ...]] = {
@@ -42,6 +45,7 @@ NEGATIVE_TOKENS: dict[str, tuple[str, ...]] = {
     "po": ("transfer", "start", "end", "shyft"),
     "packages": ("weight", "gross"),
     "quantity": ("edi",),
+    "factory": ("address", "code", "date", "x", "ready", "inspection", "price", "cost"),
 }
 
 _NORM = {k: [normalize_header(s) for s in v] for k, v in SYNONYMS.items()}

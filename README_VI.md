@@ -63,6 +63,8 @@ Chạy lần thứ hai khi ứng dụng đang mở sẽ chỉ đưa cửa sổ �
 1. Bấm **Mở trình duyệt**. Một cửa sổ Edge hiện ra (hồ sơ riêng của công cụ).
 2. **Tự đăng nhập** vào EDI Gateway trong cửa sổ đó (nhập mật khẩu, chọn hồ sơ nhà cung cấp). Phiên đăng nhập được giữ cho các lần sau; hết phiên công cụ sẽ tạm dừng và chờ bạn đăng nhập lại.
 3. Thêm nhà máy: bấm **Thêm/Sửa…** ở nhóm "Nhà máy". Nhập tên, địa chỉ, thành phố, quốc gia… (có thể đặt "Tên khác" để nhận dạng tự động). Ứng dụng gợi ý nhà máy từ tên công ty ở đầu/cuối tệp Excel.
+   - **Nhập cả danh sách từ Excel (khuyên dùng):** bấm **Nhập từ Excel…** (hoặc *Tệp > Nhập danh sách nhà máy (Excel)…*) và chọn file `factories.xlsx` (sheet đầu tiên, mỗi dòng một nhà máy; cột Factory Name, Address 1, Address 2, City, State, Zip, Country, Aliases (cách nhau bằng `;`), Code, Transportation Method, SCAC Code). Chỉ cần nhập một lần; khi danh sách thay đổi thì nhập lại file đó - nhà máy trùng tên được cập nhật, nhà máy mới được thêm, nhà máy không có trong file vẫn giữ nguyên.
+   - Transportation Method / SCAC Code để trống = dùng giá trị trong Cài đặt; điền cho nhà máy chở bằng xe tải (vd. Mexico: LTL + mã SCAC hãng xe).
 
 Lưu ý: ô Quốc gia của cổng chỉ liệt kê trực tiếp US, CA, CN. Với nước khác, công cụ sẽ tạm dừng và nhờ bạn chọn thủ công.
 
@@ -87,7 +89,8 @@ Tệp **PO tracker** MDDP (các cột `Master PO #`, `Line #`, `ASN #`, `Order U
 - **Ô chọn trong bảng kế hoạch.** Mỗi dòng PO có một ô chọn; chọn/bỏ chọn một dòng sẽ áp dụng cho mọi dòng của cùng PO chính. Dòng đã có ASN ở cột `ASN #` mặc định bị bỏ chọn và hiện màu xám ("đã có ASN ..."). Dòng đỏ (lỗi) khoá nút **Bắt đầu** cho tới khi bạn sửa Excel hoặc bỏ chọn dòng đó. Các dòng cùng một lô (PO chính) có cùng màu nền.
 - **Mỗi PO chính một lô** (tuỳ chọn gom nhóm bị cố định). Ngày giao lấy từ cột Excel `EDI PO Start/End Ship` (điểm giữa của phần giao nhau); ngày trên trang PO chỉ để đối chiếu.
 - **Số thùng.** SL/thùng = `Pack`, số thùng = `Order Units / Pack` (phải là số nguyên). Công cụ so với *Qty Ordered* trên web: bằng Order Units -> Pack mỗi thùng; bằng Order Units / Pack (prepack) -> 1 mỗi thùng; khác -> dừng chờ bạn. Trọng lượng mỗi dòng PO = `Gross Weight/Carton(kg)` đúng như trong tệp (đổi tại Cài đặt > Quy trình > *Trọng lượng cho tệp PO tracker*).
-- **Nhà máy theo từng lần chạy.** Tracker không có cột nhà máy: hãy chọn nhà máy gửi hàng mỗi lần chạy (nhà máy lần trước được chọn sẵn và được nhớ khi bấm Bắt đầu).
+- **Nhà máy tự chọn theo cột Factory Name.** Tracker xuất từ PO PDF (`PO_EXTRACT_TRACKER_FORMAT`) có cột *Factory Name*: ứng dụng tự chọn nhà máy khớp trong danh sách; nếu chưa có thì báo để bạn nhập danh sách/thêm mới. Khi cột *Order Units* trống, số lượng lấy từ cột *EDI Units*.
+- **Nhà máy theo từng lần chạy.** Tracker không có cột nhà máy (và tên file không bắt đầu bằng *Code* của nhà máy): hãy chọn nhà máy gửi hàng mỗi lần chạy (nhà máy lần trước được chọn sẵn và được nhớ khi bấm Bắt đầu).
 - **Bản sao ghi ASN.** Sau mỗi lô, Web Shipment ID được ghi vào cột `ASN #` của bản sao `<tên>_ASN_<YYYYMMDD-HHMMSS>.xlsx` cạnh tệp gốc (hoặc trong thư mục lần chạy nếu thư mục gốc không ghi được). Tệp gốc và cột `Submit ASN # (w/ Date)` không bao giờ bị sửa; chạy thử không ghi gì. Hãy dán số ASN vào tracker chính sau khi bạn Submit.
 - **Kiểm tra giữa các lô.** Cài đặt > Quy trình > *Tạm dừng để kiểm tra giữa các lô* điều khiển việc dừng sau khi mỗi lô được nhập xong.
 

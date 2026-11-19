@@ -7,7 +7,7 @@ from PySide6.QtCore import QEventLoop, QProcess, QProcessEnvironment
 from PySide6.QtWidgets import QProgressDialog, QWidget
 
 from edi_assistant.core import paths
-from edi_assistant.core.browser_detect import chromium_available, edge_available  # noqa: F401
+from edi_assistant.core.browser_detect import chrome_available, chromium_available, edge_available  # noqa: F401
 
 from .strings import S
 

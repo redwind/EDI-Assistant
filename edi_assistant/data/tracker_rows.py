@@ -20,6 +20,8 @@ _EXTRACT_REQUIRED = ("po", "quantity", "pack", "gw_per_carton", "start_ship", "e
 
 def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnMapping) -> RowExtraction:
     missing = [k for k in _EXTRACT_REQUIRED if mapping.columns.get(k) is None]
+    if "quantity" in missing and mapping.columns.get("edi_units") is not None:
+        missing.remove("quantity")
     if missing:
         raise MappingIncompleteError(f"Mapping incomplete, missing: {missing}",
                                      message_vi="Required columns are not mapped: " + ", ".join(missing),
@@ -34,6 +36,7 @@ def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnM
     lines: list[POLine] = []
     skipped: list[tuple[int, str]] = []
     flags: list[Flag] = []
+    factory_names: dict[str, str] = {}   # normalized -> first spelling seen
 
     def cell(r: int, key: str) -> object:
         return grid.get(r, cols[key]) if key in cols else None
@@ -71,6 +74,13 @@ def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnM
             container = prev_container
         # numbers
         J = parse_decimal(cell(r, "quantity"))
+        if (J is None or J == 0) and "edi_units" in cols:
+            J = parse_decimal(cell(r, "edi_units"))
+            if J is not None and J > 0 and "quantity" in cols:
+                row_flags.append(Flag("units_from_edi", f"Row {r}: Order Units empty - using EDI Units {J}", "info"))
+        fac = parse_text_or_blank(grid.get_merged(r, cols["factory"])) if "factory" in cols else ""
+        if fac:
+            factory_names.setdefault(" ".join(fac.lower().split()), fac)
         Q = parse_decimal(cell(r, "pack"))
         T = parse_decimal(cell(r, "gw_per_carton"))
         ok = True
@@ -123,4 +133,9 @@ def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnM
                                     f"Duplicate line {pl.line:02d} for master PO {pl.master_po}", "error"))
         else:
             seen[key] = pl
-    return RowExtraction(lines, skipped, "", flags)
+    company = next(iter(factory_names.values()), "")
+    if len(factory_names) > 1:
+        flags.append(Flag("multiple_factories",
+                          "File lists several factories (" + "; ".join(factory_names.values())
+                          + ") - one run uses one ship-from factory", "warning"))
+    return RowExtraction(lines, skipped, company, flags)

@@ -108,6 +108,7 @@ FIELD_LABELS = {
     "size": "Kích thước",
     "asn": "ASN #", "model_no": "Model #", "start_ship": "EDI PO Start Ship", "end_ship": "EDI PO End Ship",
     "pack": "Pack (số lượng mỗi thùng)", "gw_per_carton": "Trọng lượng cả bì mỗi thùng (kg)", "container": "Container",
+    "edi_units": "EDI Units (dùng khi Order Units trống)", "factory": "Tên nhà máy",
 }
 
 # --- factory dialog
@@ -293,3 +294,15 @@ AUTOSTART_BLOCKED = ("Windows chặn cài đặt 'khởi động cùng Windows' 
                      "Tuỳ chọn đã được tắt; ứng dụng vẫn hoạt động bình thường.")
 BROWSER_LOCKED_DOWN = ("Không mở được trình duyệt. Chính sách công ty có thể chặn tự động hoá Microsoft Edge. "
                        "Hãy dùng bản zip portable 'full' hoặc chạy Trợ giúp > Kiểm tra hệ thống.")
+
+# --- nhập danh sách nhà máy (Excel)
+BTN_IMPORT_FACTORIES = "Nhập từ Excel…"
+MENU_IMPORT_FACTORIES = "Nhập danh sách nhà máy (Excel)…"
+FACTORY_IMPORT_TITLE = "Chọn file Excel danh sách nhà máy"
+FACTORY_IMPORT_DONE = "Đã nhập danh sách nhà máy từ {file}:\nthêm mới {added}, cập nhật {updated} (tổng {total} nhà máy)."
+FACTORY_IMPORT_EMPTY = "Không tìm thấy dòng nhà máy nào trong {file}."
+FACTORY_IMPORT_TIP = "Nạp/cập nhật danh sách nhà máy từ file Excel (mỗi dòng một nhà máy). File gần nhất: {file}"
+FACTORY_CODE = "Mã (số đầu tên file)"
+FACTORY_TRANSPORT = "Transportation method (trống = theo Cài đặt)"
+FACTORY_SCAC = "SCAC code (trống = theo Cài đặt)"
+LBL_FACTORY_NOT_FOUND = "Nhà máy trong file: {text} - chưa có trong danh sách (hãy nhập danh sách nhà máy hoặc thêm mới)"

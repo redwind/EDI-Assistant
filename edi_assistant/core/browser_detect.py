@@ -63,10 +63,25 @@ def edge_available() -> bool:
     return False
 
 
-def launch_plan(channel: str, *, bundled: bool, chromium: bool) -> list[str | None]:
+def chrome_available() -> bool:
+    if sys.platform == "win32":
+        for env in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
+            base = os.environ.get(env)
+            if base and (Path(base) / "Google" / "Chrome" / "Application" / "chrome.exe").is_file():
+                return True
+        return False
+    if sys.platform == "darwin":
+        return any(Path(b, "Google Chrome.app").exists() for b in ("/Applications", Path.home() / "Applications"))
+    return any(Path(p).is_file() for p in ("/usr/bin/google-chrome", "/usr/bin/google-chrome-stable",
+                                           "/opt/google/chrome/chrome"))
+
+
+def launch_plan(channel: str, *, bundled: bool, chromium: bool, edge: bool = True,
+                chrome: bool = False) -> list[str | None]:
     """Ordered launch attempts. Each item is a Playwright `channel` value; None means bundled/downloaded Chromium.
 
-    auto     : bundled Chromium if present, else Edge (then downloaded Chromium if available).
+    auto     : bundled Chromium if present, else Edge (if installed), then Google Chrome (if installed),
+               then downloaded Chromium if available.
     msedge   : Edge, then Chromium if available.
     chromium : Chromium only.
     other    : passed through (e.g. "chrome"), then Chromium if available.
@@ -77,7 +92,12 @@ def launch_plan(channel: str, *, bundled: bool, chromium: bool) -> list[str | No
     if ch == "auto":
         if bundled:
             return [None, "msedge"]
-        return ["msedge"] + ([None] if chromium else [])
+        plan: list[str | None] = ["msedge"] if edge or not (chrome or chromium) else []
+        if chrome:
+            plan.append("chrome")
+        if chromium:
+            plan.append(None)
+        return plan
     return [ch] + ([None] if chromium else [])
 
 

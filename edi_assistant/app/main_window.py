@@ -130,9 +130,14 @@ class MainWindow(QMainWindow):
         self.factory_combo.currentIndexChanged.connect(self._on_factory_changed)
         btn_factory = QPushButton(S.BTN_EDIT_FACTORY)
         btn_factory.clicked.connect(self.edit_factories)
+        self.btn_import_factories = QPushButton(S.BTN_IMPORT_FACTORIES)
+        self.btn_import_factories.clicked.connect(self.import_factories)
+        self.btn_import_factories.setToolTip(S.FACTORY_IMPORT_TIP.format(file=self.cfg.ui.last_factory_xlsx or "-"))
         self.factory_hint = QLabel("")
+        self.factory_hint.setWordWrap(True)
         h2.addWidget(self.factory_combo, 2)
         h2.addWidget(btn_factory)
+        h2.addWidget(self.btn_import_factories)
         h2.addWidget(self.factory_hint, 3)
         lay.addWidget(g2)
         self._reload_factories()
@@ -207,6 +212,7 @@ class MainWindow(QMainWindow):
 
         m1 = mb.addMenu(S.MENU_FILE)
         add(m1, S.MENU_OPEN_EXCEL, self.choose_file)
+        add(m1, S.MENU_IMPORT_FACTORIES, self.import_factories)
         add(m1, S.MENU_EXIT, self.request_quit)
         m2 = mb.addMenu(S.MENU_TOOLS)
         add(m2, S.MENU_SETTINGS, self.open_settings)
@@ -421,6 +427,10 @@ class MainWindow(QMainWindow):
         f = None
         if self.rx and self.rx.company_text:
             f, _score = self.factories.suggest(self.rx.company_text)
+            self.factory_hint.setText((S.LBL_FACTORY_HINT if f is not None else S.LBL_FACTORY_NOT_FOUND)
+                                      .format(text=self.rx.company_text))
+        if f is None and self.path is not None:
+            f = self.factories.by_file_code(self.path.name)
         if f is None and self.match is not None and self.match.template.factory_id:
             f = self.factories.get(self.match.template.factory_id)
         if f is not None:
@@ -447,6 +457,38 @@ class MainWindow(QMainWindow):
         sel = dlg.selected() if accepted else None
         self._reload_factories(sel.id if sel else "")
         self._rebuild_plan()
+
+    def import_factories(self) -> None:
+        """Load/refresh the factory list from an Excel workbook (add new, update existing by name)."""
+        from edi_assistant.data.factories import read_factories_xlsx
+
+        last = self.cfg.ui.last_factory_xlsx
+        start = last if last else (self.cfg.ui.last_excel_dir or str(Path.home()))
+        fn, _ = QFileDialog.getOpenFileName(self, S.FACTORY_IMPORT_TITLE, start, "Excel (*.xlsx *.xlsm)")
+        if not fn:
+            return
+        try:
+            items = read_factories_xlsx(fn)
+        except Exception as e:  # noqa: BLE001
+            self._show_error(e)
+            return
+        name = Path(fn).name
+        if not items:
+            QMessageBox.warning(self, S.APP_TITLE, S.FACTORY_IMPORT_EMPTY.format(file=name))
+            return
+        added, updated = self.factories.merge(items)
+        self.cfg.ui.last_factory_xlsx = fn
+        self.btn_import_factories.setToolTip(S.FACTORY_IMPORT_TIP.format(file=fn))
+        try:
+            save_config(self.cfg)
+        except Exception:  # noqa: BLE001
+            pass
+        self._reload_factories()
+        if self.rx is not None:
+            self._autoselect_factory()
+        self._rebuild_plan()
+        QMessageBox.information(self, S.APP_TITLE, S.FACTORY_IMPORT_DONE.format(
+            file=name, added=added, updated=updated, total=len(self.factories.list())))
 
     # -------------------------------------------------------------------- run
     def can_start(self) -> bool:
@@ -667,7 +709,8 @@ class MainWindow(QMainWindow):
                 self.open_system_check()
                 return
         if (self.cfg.browser.channel in ("auto", "msedge") and not browser_install.edge_available()
-                and not browser_install.chromium_available()):
+                and not browser_install.chromium_available()
+                and not (self.cfg.browser.channel == "auto" and browser_install.chrome_available())):
             if QMessageBox.question(self, S.APP_TITLE, S.ASK_INSTALL_CHROMIUM) == QMessageBox.StandardButton.Yes:
                 self.install_chromium()
 

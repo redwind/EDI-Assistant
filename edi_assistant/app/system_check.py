@@ -60,7 +60,8 @@ def probe_edge(cfg: AppConfig) -> tuple[str, str]:
 
 def probe_browser_launch(cfg: AppConfig, headless: bool) -> tuple[str, str]:
     """Launch the browser the app would use (same plan as the real session) and close it again."""
-    plan = bd.launch_plan(cfg.browser.channel, bundled=bd.bundled_chromium_available(), chromium=bd.chromium_available())
+    plan = bd.launch_plan(cfg.browser.channel, bundled=bd.bundled_chromium_available(), chromium=bd.chromium_available(),
+                              edge=bd.edge_available(), chrome=bd.chrome_available())
     prof = Path(tempfile.mkdtemp(prefix="edi-syscheck-"))
     errors: list[str] = []
     try:

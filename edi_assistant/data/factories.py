@@ -66,6 +66,38 @@ class FactoryStore:
     def delete(self, factory_id: str) -> None:
         self._write([f for f in self.list() if f.id != factory_id])
 
+    def merge(self, incoming: list[FactoryAddress]) -> tuple[int, int]:
+        """Add/update factories by name (case/punctuation ignored); keeps ids and factories not in `incoming`.
+
+        Returns (added, updated)."""
+        items = self.list()
+        by_key = {normalize_company(f.name) or f.name.lower(): i for i, f in enumerate(items)}
+        added = updated = 0
+        for f in incoming:
+            key = normalize_company(f.name) or f.name.lower()
+            if key in by_key:
+                old = items[by_key[key]]
+                f.id = old.id
+                if not f.site_no:
+                    f.site_no = old.site_no     # Site No is picked in the app, not in the Excel list
+                items[by_key[key]] = f
+                updated += 1
+            else:
+                f.id = f.id or uuid.uuid4().hex
+                by_key[key] = len(items)
+                items.append(f)
+                added += 1
+        self._write(items)
+        return added, updated
+
+    def by_file_code(self, file_name: str) -> FactoryAddress | None:
+        """Factory whose Code equals the number at the start of the file name ('2596 - xxx.xlsx')."""
+        m = re.match(r"\s*(\d+)", Path(file_name).name)
+        if not m:
+            return None
+        return next((f for f in self.list() if f.code and f.code.strip().lstrip("0") == m.group(1).lstrip("0")),
+                    None)
+
     def suggest(self, company_text: str) -> tuple[FactoryAddress | None, float]:
         target = normalize_company(company_text)
         if not target:
@@ -128,3 +160,79 @@ def factory_from_excel_footer(text: str) -> FactoryAddress:
         addr1, city = parts[0], parts[-1]
         addr2 = ", ".join(parts[1:-1])
     return FactoryAddress(id="", name=name, address1=addr1, address2=addr2, city=city, country=country)
+
+
+# ---------------------------------------------------------------- Excel factory list
+_XLSX_COLUMNS = {
+    "name": ("factory name", "factory", "name", "tên nhà máy"),
+    "address1": ("address 1", "address1", "address line 1", "địa chỉ 1"),
+    "address2": ("address 2", "address2", "address line 2", "địa chỉ 2"),
+    "city": ("city", "thành phố"),
+    "state": ("state", "province", "state province", "tỉnh"),
+    "zip": ("zip", "zip code", "postal code", "postcode", "mã bưu điện"),
+    "country": ("country", "quốc gia"),
+    "aliases": ("aliases", "alias", "other names", "tên khác"),
+    "code": ("code", "factory code", "mã"),
+    "site_no": ("site no", "site", "site number"),
+    "transport_method": ("transportation method", "transport method", "transportation"),
+    "scac_code": ("scac code", "scac"),
+}
+
+
+def _norm_head(v: object) -> str:
+    return " ".join(re.sub(r"[^\w ]", " ", str(v or "").lower()).split())
+
+
+def _cell_text(v: object) -> str:
+    if v is None:
+        return ""
+    if isinstance(v, float) and v == int(v):
+        v = int(v)
+    return " ".join(str(v).split())
+
+
+def read_factories_xlsx(path: str | Path) -> list[FactoryAddress]:
+    """Read the factory list workbook (first sheet, header row with 'Factory Name').
+
+    One row = one factory. Aliases are separated by ';' (or ',')."""
+    from openpyxl import load_workbook
+
+    from edi_assistant.core.errors import EdiAssistantError
+
+    wb = load_workbook(path, read_only=True, data_only=True)
+    try:
+        ws = wb.worksheets[0]
+        rows = list(ws.iter_rows(values_only=True))
+    finally:
+        wb.close()
+    lookup = {syn: key for key, syns in _XLSX_COLUMNS.items() for syn in syns}
+    header_idx, cols = None, {}
+    for i, row in enumerate(rows[:20]):
+        found = {}
+        for j, v in enumerate(row):
+            key = lookup.get(_norm_head(v))
+            if key and key not in found:
+                found[key] = j
+        if "name" in found and "address1" in found:
+            header_idx, cols = i, found
+            break
+    if header_idx is None:
+        raise EdiAssistantError("factory list header not found",
+                                message_vi="Header row not found (needs 'Factory Name' and 'Address 1' columns) "
+                                           "in the first sheet.")
+    out: list[FactoryAddress] = []
+    for row in rows[header_idx + 1:]:
+        def get(key: str) -> str:
+            j = cols.get(key)
+            return _cell_text(row[j]) if j is not None and j < len(row) else ""
+        name = get("name")
+        if not name:
+            continue
+        aliases = [a.strip() for a in re.split(r"[;,\n]", get("aliases")) if a.strip()]
+        scac = get("scac_code").split("-", 1)[0].strip().upper()   # 'MAEU-MAERSK' -> 'MAEU'
+        out.append(FactoryAddress(
+            id="", name=name, address1=get("address1"), address2=get("address2"), city=get("city"),
+            state=get("state"), zip=get("zip"), country=(get("country") or "CHINA").upper(),
+            site_no=get("site_no"), aliases=aliases, code=get("code"), transport_method=get("transport_method"),
+            scac_code=scac))
+    return out

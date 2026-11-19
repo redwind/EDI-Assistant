@@ -341,8 +341,12 @@ class S6FillHeaderSave(Step):
         a.check("ship.radio_with_cartons")
         a.select("ship.shipping_type", value="3", label=cfg.shipping_type)
         a.fill("ship.shipping_date", format_mdy(sh.shipping_date), dispatch_change=True)
-        a.select("ship.transportation_method", value="O", label=cfg.transportation_method)
-        a.select("ship.scac_code", value=cfg.scac_code, label_prefix=cfg.scac_code)
+        if f.transport_method:   # factory override (e.g. Mexico by truck: LTL)
+            a.select("ship.transportation_method", label=f.transport_method, label_prefix=f.transport_method)
+        else:
+            a.select("ship.transportation_method", value="O", label=cfg.transportation_method)
+        scac = f.scac_code or cfg.scac_code
+        a.select("ship.scac_code", value=scac, label_prefix=scac)
         if not _poll(lambda: a.read_value("ship.carrier", timeout_ms=NEG), 3000, ctx):
             a.resolve("ship.scac_code")[0].dispatch_event("change")   # nudge the onchange handler once
             if not _poll(lambda: a.read_value("ship.carrier", timeout_ms=NEG), 3000, ctx):

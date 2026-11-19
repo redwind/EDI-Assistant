@@ -47,8 +47,10 @@ class _Stop(Exception):
     """Launch 'succeeded' - stop before the rest of open()."""
 
 
-def _open_with(monkeypatch, tmp_path, channel, fail, msg, bundled, chromium):
+def _open_with(monkeypatch, tmp_path, channel, fail, msg, bundled, chromium, edge=True, chrome=False):
     fake = _FakeChromium(fail, msg)
+    monkeypatch.setattr(bd, "edge_available", lambda: edge)
+    monkeypatch.setattr(bd, "chrome_available", lambda: chrome)
     monkeypatch.setattr("edi_assistant.automation.session.sync_playwright",
                         lambda: SimpleNamespace(start=lambda: SimpleNamespace(chromium=fake, stop=lambda: None)))
     monkeypatch.setattr(bd, "bundled_chromium_available", lambda: bundled)
@@ -195,3 +197,18 @@ def test_closing_dialog_midrun_does_not_block_or_destroy_thread(qtbot):
     gate.set()
     scd.wait_for_background(5000)
     qtbot.waitUntil(lambda: not scd._LIVE, timeout=5000)
+
+
+def test_launch_plan_uses_chrome_when_edge_missing():
+    assert bd.launch_plan("auto", bundled=False, chromium=False, edge=False, chrome=True) == ["chrome"]
+    assert bd.launch_plan("auto", bundled=False, chromium=True, edge=False, chrome=True) == ["chrome", None]
+    assert bd.launch_plan("auto", bundled=False, chromium=False, edge=True, chrome=True) == ["msedge", "chrome"]
+    assert bd.launch_plan("auto", bundled=False, chromium=True, edge=False, chrome=False) == [None]
+    assert bd.launch_plan("auto", bundled=False, chromium=False, edge=False, chrome=False) == ["msedge"]
+
+
+def test_auto_mac_without_edge_uses_chrome(monkeypatch, tmp_path):
+    s, fake = _open_with(monkeypatch, tmp_path, "auto", set(), "x", False, False, edge=False, chrome=True)
+    with pytest.raises(_Stop):
+        s.open()
+    assert fake.calls == ["chrome"]
