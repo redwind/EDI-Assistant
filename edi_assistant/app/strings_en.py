@@ -307,3 +307,12 @@ FACTORY_CODE = "Code (file-name number)"
 FACTORY_TRANSPORT = "Transportation method (blank = Settings)"
 FACTORY_SCAC = "SCAC code (blank = Settings)"
 LBL_FACTORY_NOT_FOUND = "Factory in file: {text} - not in the list (import the factory list or add it)"
+
+# --- another version already running
+INSTANCE_OLD_RUNNING = ("An older version of EDI Assistant is still running (in the system tray, near the clock), "
+                        "so version {version} cannot start.\n\nRight-click the EDI Assistant tray icon > Exit "
+                        "(or end it in Task Manager), then open this version again.")
+INSTANCE_OTHER_VERSION = ("EDI Assistant {running} is already running (system tray). This is version {version}.\n\n"
+                          "Close version {running} and open {version}?")
+INSTANCE_QUIT_TIMEOUT = ("EDI Assistant {running} did not close. Exit it from the tray icon (right-click > Exit), "
+                         "then open this version again.")

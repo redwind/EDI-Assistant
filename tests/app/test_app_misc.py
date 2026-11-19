@@ -1,6 +1,9 @@
+import os
 import re
 import sys
 from pathlib import Path
+
+import pytest
 
 from PySide6.QtWidgets import QSystemTrayIcon
 
@@ -119,3 +122,87 @@ def test_autostart_command_quotes_exe_path_with_space(monkeypatch):
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     assert autostart._command() == f'"{exe}" --minimized'
     assert autostart.VALUE_NAME == "EDIAssistant"   # registry value name stays space-free
+
+
+
+_RUNNING_APP = r"""
+import sys
+from PySide6.QtCore import QCoreApplication, QTimer
+from PySide6.QtNetwork import QLocalServer
+key, version = sys.argv[1], sys.argv[2]
+app = QCoreApplication([])
+if version == "legacy":            # protocol of builds <= 0.1.1: reads the message, never answers
+    QLocalServer.removeServer(key)
+    srv = QLocalServer()
+    srv.listen(key)
+    def on_conn():
+        while srv.hasPendingConnections():
+            c = srv.nextPendingConnection()
+            c.waitForReadyRead(200)
+            print("GOT", bytes(c.readAll()).decode(), flush=True)
+            c.disconnectFromServer()
+    srv.newConnection.connect(on_conn)
+else:
+    from edi_assistant.app.single_instance import SingleInstance
+    g = SingleInstance(key, version=version)
+    assert g.try_acquire()
+    g.show_requested.connect(lambda: print("SHOW", flush=True))
+    g.quit_requested.connect(lambda: (print("QUIT", flush=True), g.release(), app.quit()))
+print("READY", flush=True)
+QTimer.singleShot(20000, app.quit)
+app.exec()
+"""
+
+
+@pytest.fixture
+def running_app(tmp_path):
+    procs = []
+
+    def start(key, version):
+        import subprocess
+        script = tmp_path / "running_app.py"
+        script.write_text(_RUNNING_APP)
+        env = dict(os.environ, QT_QPA_PLATFORM="offscreen",
+                   PYTHONPATH=str(Path(__file__).resolve().parents[2]))
+        pr = subprocess.Popen([sys.executable, str(script), key, version], stdout=subprocess.PIPE, text=True, env=env)
+        procs.append(pr)
+        assert pr.stdout.readline().strip() == "READY"
+        return pr
+
+    yield start
+    for pr in procs:
+        pr.kill()
+        pr.wait()
+
+
+def _key(tag):
+    return f"EDIAssistant-test-{tag}-{os.getpid()}"
+
+
+def test_single_instance_same_version_shows(running_app):
+    key = _key("same")
+    pr = running_app(key, "0.1.2")
+    new = SingleInstance(key, version="0.1.2")
+    assert new.try_acquire() is False and new.running_version is None
+    assert pr.stdout.readline().strip() == "SHOW"
+
+
+def test_single_instance_other_version_reported_and_replaced(running_app):
+    key = _key("other")
+    pr = running_app(key, "0.1.1")
+    new = SingleInstance(key, version="0.1.2")
+    try:
+        assert new.try_acquire() is False and new.running_version == "0.1.1"
+        assert new.replace_running(timeout_s=10) is True
+        assert pr.stdout.readline().strip() == "QUIT"     # did not raise its window before quitting
+        assert new.running_version is None
+    finally:
+        new.release()
+
+
+def test_single_instance_old_build_without_version_reply(running_app):
+    key = _key("legacy")
+    pr = running_app(key, "legacy")
+    new = SingleInstance(key, version="0.1.2")
+    assert new.try_acquire() is False and new.running_version == "?"
+    assert pr.stdout.readline().strip() == "GOT SHOW 0.1.2"

@@ -306,3 +306,12 @@ FACTORY_CODE = "Mã (số đầu tên file)"
 FACTORY_TRANSPORT = "Transportation method (trống = theo Cài đặt)"
 FACTORY_SCAC = "SCAC code (trống = theo Cài đặt)"
 LBL_FACTORY_NOT_FOUND = "Nhà máy trong file: {text} - chưa có trong danh sách (hãy nhập danh sách nhà máy hoặc thêm mới)"
+
+# --- đang chạy một phiên bản khác
+INSTANCE_OLD_RUNNING = ("Một phiên bản cũ của EDI Assistant vẫn đang chạy (ở khay hệ thống, gần đồng hồ), "
+                        "nên phiên bản {version} không mở được.\n\nChuột phải biểu tượng EDI Assistant ở khay > Thoát "
+                        "(hoặc tắt trong Task Manager), rồi mở lại phiên bản này.")
+INSTANCE_OTHER_VERSION = ("EDI Assistant {running} đang chạy (ở khay hệ thống). Đây là phiên bản {version}.\n\n"
+                          "Đóng phiên bản {running} và mở {version}?")
+INSTANCE_QUIT_TIMEOUT = ("EDI Assistant {running} chưa đóng. Hãy thoát nó từ biểu tượng ở khay (chuột phải > Thoát), "
+                         "rồi mở lại phiên bản này.")

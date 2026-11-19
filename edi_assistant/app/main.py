@@ -49,7 +49,7 @@ def main(argv: list[str] | None = None) -> int:
     from PySide6.QtGui import QIcon
     from PySide6.QtWidgets import QApplication
 
-    from edi_assistant import APP_DISPLAY_NAME
+    from edi_assistant import APP_DISPLAY_NAME, __version__
     from edi_assistant.core.config import load_config, save_config
     from edi_assistant.core.logging_setup import setup_logging
 
@@ -73,9 +73,12 @@ def main(argv: list[str] | None = None) -> int:
     app.setOrganizationName("SHYFT GLOBAL")
     app.setWindowIcon(QIcon(str(resource("app.png"))))
 
-    guard = SingleInstance()
+    guard = SingleInstance(version=__version__)
     if not guard.try_acquire():
-        return 0
+        if guard.running_version is None:
+            return 0   # same version already running: it raised its window
+        if not _replace_other_version(guard):
+            return 0
 
     mock = None
     if args.mock:
@@ -92,6 +95,7 @@ def main(argv: list[str] | None = None) -> int:
 
     win = MainWindow(cfg, worker, bridge, startup_checks=True)
     guard.show_requested.connect(win.show_and_raise)
+    guard.quit_requested.connect(win.request_quit)
     win.tray = TrayIcon(win)
     autostart.refresh(cfg.notify.start_with_windows)
     if not (cfg.notify.start_minimized or args.minimized):
@@ -104,3 +108,26 @@ def main(argv: list[str] | None = None) -> int:
         mock.stop()
     save_config(cfg)
     return code
+
+
+def _replace_other_version(guard) -> bool:
+    """Another version is running. Offer to close it; True when this launch may continue."""
+    from PySide6.QtWidgets import QMessageBox
+
+    from edi_assistant import __version__
+
+    from .single_instance import UNKNOWN_VERSION
+    from .strings import S
+
+    other = guard.running_version
+    if other == UNKNOWN_VERSION:   # old build: cannot be closed remotely, it has already shown itself
+        QMessageBox.warning(None, S.APP_TITLE, S.INSTANCE_OLD_RUNNING.format(version=__version__))
+        return False
+    if QMessageBox.question(None, S.APP_TITLE, S.INSTANCE_OTHER_VERSION.format(
+            running=other, version=__version__)) != QMessageBox.StandardButton.Yes:
+        guard.raise_running()
+        return False
+    if guard.replace_running():
+        return True
+    QMessageBox.warning(None, S.APP_TITLE, S.INSTANCE_QUIT_TIMEOUT.format(running=other))
+    return False
