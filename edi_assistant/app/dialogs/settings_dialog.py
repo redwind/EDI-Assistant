@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 
 from edi_assistant.core.ai_interface import ExplainRequest
 from edi_assistant.core.config import AI_PRESETS, AppConfig, config_from_dict, config_to_dict
+from edi_assistant.core.dc_sites import DEFAULT_TO_SITES, format_table, parse_table
 from edi_assistant.core.errors import EdiAssistantError
 
 from ..strings import S
@@ -139,6 +140,8 @@ class SettingsDialog(QDialog):
         self.shipping_type = QLineEdit(fl.shipping_type)
         self.transport = QLineEdit(fl.transportation_method)
         self.scac = QLineEdit(fl.scac_code)
+        self.to_sites = QLineEdit(format_table(fl.to_sites))
+        self.to_sites.setToolTip(S.SET_TO_SITES_HELP)
         self.bol = QLineEdit(fl.bill_of_lading)
         self.pro = QLineEdit(fl.pro_number)
         self.pack_code = QLineEdit(fl.packaging_code_carton)
@@ -158,6 +161,7 @@ class SettingsDialog(QDialog):
             (S.SET_GROUPING, self.grouping), ("", self.dry_run), (S.SET_WEIGHT_MODE, self.weight_mode),
             (S.SET_TRACKER_WEIGHT, self.tracker_weight), ("", self.review_between),
             (S.SET_SHIPPING_TYPE, self.shipping_type), (S.SET_TRANSPORT, self.transport), (S.SET_SCAC, self.scac),
+            (S.SET_TO_SITES, self.to_sites),
             (S.SET_BOL, self.bol), (S.SET_PRO, self.pro), (S.SET_PACK_CODE, self.pack_code),
             (S.SET_COMPLETE_PARTIAL, self.complete_partial), (S.SET_WEIGHT_UM, self.weight_um),
             ("", self.click_validate), ("", self.write_back), ("", self.pause_qty),
@@ -304,6 +308,7 @@ class SettingsDialog(QDialog):
         f.shipping_type = self.shipping_type.text().strip()
         f.transportation_method = self.transport.text().strip()
         f.scac_code = self.scac.text().strip()
+        f.to_sites = parse_table(self.to_sites.text()) or dict(DEFAULT_TO_SITES)
         f.bill_of_lading = self.bol.text().strip()
         f.pro_number = self.pro.text().strip()
         f.packaging_code_carton = self.pack_code.text().strip()

@@ -20,6 +20,7 @@ class DialogPolicy:
         self._pattern: re.Pattern | None = None
         self._expires = 0.0
         self.history: list[tuple[str, str, bool]] = []
+        self.count = 0   # dialogs seen so far (never trimmed): mark before an action, read with since()
 
     def install(self, page: Page) -> None:
         page.on("dialog", self._handle)
@@ -31,6 +32,11 @@ class DialogPolicy:
 
     def disarm(self) -> None:
         self._pattern = None
+
+    def since(self, mark: int) -> list[tuple[str, str, bool]]:
+        """Dialogs recorded after `mark` (a previous value of `count`), oldest first."""
+        n = self.count - mark
+        return self.history[-n:] if n > 0 else []
 
     def pop_last(self) -> tuple[str, str, bool] | None:
         return self.history.pop() if self.history else None
@@ -44,6 +50,7 @@ class DialogPolicy:
 
     def _record(self, d: Dialog, accepted: bool) -> None:
         self.history.append((d.type, d.message, accepted))
+        self.count += 1
         del self.history[:-50]
 
     def _handle(self, dialog: Dialog) -> None:

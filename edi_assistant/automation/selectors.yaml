@@ -79,8 +79,11 @@ keys:
     candidates: [{kind: css, css: "#txtFromCountry"}, {kind: css, css: "select[name='txtFromCountry']"}]}
   ship.from_country_more_link:     {page: shipment, verified: true, description: "'More..' link next to FROM Country",
     candidates: [{kind: xpath, xpath: "//select[@id='txtFromCountry']/following::a[normalize-space()='More..'][1]"}, {kind: text, text: "More..", exact: true, nth: 1}]}
-  ship.to_site_no:                 {page: shipment, verified: true, description: "TO Site No (readonly)",
-    candidates: [{kind: css, css: "input[name='optToSiteNo']"}]}
+  ship.to_site_no:                 {page: shipment, verified: true, description: "TO Site No (read back: select or readonly input)",
+    candidates: [{kind: css, css: "[name='optToSiteNo']"}, {kind: css, css: "select[name*='ToSite' i]"}]}
+  ship.to_site_select:             {page: shipment, verified: false, description: "TO Site No dropdown (DC: CA=512, NJ=053, GA=934)",
+    candidates: [{kind: css, css: "select[name='optToSiteNo']"}, {kind: css, css: "select[name*='ToSite' i]"},
+                 {kind: xpath, xpath: "(//*[not(self::option) and not(self::script)][normalize-space(text())='Site No' or normalize-space(text())='Site No:' or normalize-space(text())='* Site No:']/following::*[self::select or self::input[not(@type='hidden')]][1])[2][self::select]"}]}
   ship.to_address1:                {page: shipment, verified: true, description: "TO Address 1 (readonly)", candidates: [{kind: css, css: "input[name='txtToAddress1']"}]}
   ship.save_button:                {page: shipment, verified: true, description: "Save button of shipment header",
     candidates: [{kind: css, css: "#saveonly"}, {kind: css, css: "input[type='submit'][value='Save']"}, {kind: role, role: button, name: "Save", exact: true}]}

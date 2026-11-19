@@ -38,6 +38,8 @@ SYNONYMS.update({
     "edi_units": ["edi units", "edi qty", "edi quantity", "po units", "buyer units"],
     "factory": ["factory", "factory name", "vendor factory", "manufacturer", "supplier", "工厂", "nhà máy",
                 "tên nhà máy"],
+    "delivery_address": ["delivery address", "ship to address", "dc address", "destination address",
+                         "deliver to", "địa chỉ giao hàng"],
 })
 # A header containing any of these tokens can never map to that field (score forced to 0).
 NEGATIVE_TOKENS: dict[str, tuple[str, ...]] = {

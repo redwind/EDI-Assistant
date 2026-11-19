@@ -89,7 +89,7 @@ Hidden: `action, shipment_id, Dirty_Flag, required, AddUpdate, checkShipmentHasO
 | From State | `#txtFromState` | required |
 | From Zip | `#txtFromZip` | required |
 | From Country | `#txtFromCountry` (select) | ONLY `US, CA, CN` + "More.." link (popup) for Vietnam etc. Not in the list -> ask the user to pick manually. |
-| To Site No | `input[name=optToSiteNo]` readonly (e.g. 512) | auto from PO |
+| To Site No | `input[name=optToSiteNo]` readonly (e.g. 512) | auto from PO when the shipment is opened from an order. On a blank New Shipment it is a dropdown that must be chosen from the Delivery Address state (EDI notice: CA=512, NJ=053, GA=934); exact select name not captured yet (`ship.to_site_select` is unverified) |
 | To fields | `txtToName, txtToAddress1, txtToAddress2, txtToCity, txtToState, txtToZip, txtToCountryUnHidden` readonly | verify only |
 
 Buttons:

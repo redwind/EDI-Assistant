@@ -72,3 +72,26 @@ def test_s6_check_still_fails_without_saved_state(ctx, monkeypatch):
     step, _ = _s6_ctx(ctx, monkeypatch, submit_present=True, ids_ok=False)
     with pytest.raises(PostconditionFailed):
         step.check(ctx)
+
+
+
+def test_no_reload_quotes_site_popups(monkeypatch):
+    """A Save blocked by a JS alert/confirm must say what the site asked, not only 'did not reload'."""
+    from edi_assistant.automation.dialogs import DialogPolicy
+    from edi_assistant.automation.flow import steps
+    monkeypatch.setattr(steps, "_settle", lambda c: None)
+    monkeypatch.setattr(steps, "_visible_text", lambda c, k, v=None: "")
+    pol = DialogPolicy(logging.getLogger("t"), lambda e: None)
+    d = lambda typ, msg: SimpleNamespace(type=typ, message=msg)   # noqa: E731
+    pol._record(d("alert", "old one"), True)
+    c = SimpleNamespace(dialogs=pol)
+    mark = steps._dialog_mark(c)
+    pol._record(d("alert", "Shipping Date\n is invalid"), True)
+    pol._record(d("confirm", "Continue anyway?"), False)
+    with pytest.raises(PostconditionFailed) as ei:
+        steps._after_save(c, False, "header", "S6", mark)
+    m = ei.value.message_vi
+    assert '"Shipping Date is invalid"' in m and '"Continue anyway?" (answered Cancel)' in m and "old one" not in m
+    with pytest.raises(PostconditionFailed) as ei:
+        steps._after_save(c, False, "header", "S6", steps._dialog_mark(c))
+    assert "check the page in the browser" in ei.value.message_vi

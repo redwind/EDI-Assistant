@@ -6,6 +6,7 @@ import time
 from dataclasses import dataclass
 from datetime import date, datetime
 
+from edi_assistant.core.dc_sites import DEFAULT_TO_SITES, site_for, state_of
 from edi_assistant.core.dates import compute_shipping_date, format_mdy, intersect
 from edi_assistant.core.errors import PlanError
 from edi_assistant.core.models import FactoryAddress, Flag, PlannedLine, POLine, RunPlan, ShipmentPlan
@@ -23,14 +24,35 @@ class PlanOptions:
     profile: str = "packing_list"
     tracker_weight_mode: str = "per_carton_as_is"
     today: date | None = None
+    to_sites: dict[str, str] | None = None   # None = DEFAULT_TO_SITES
 
 
 def new_run_id() -> str:
     return time.strftime("%Y%m%d-%H%M%S") + "-" + secrets.token_hex(2)
 
 
+def _to_site(sh: ShipmentPlan, lines: list[POLine], table: dict[str, str]) -> None:
+    """TO Site No from the lines' Delivery Address (state -> site). No address column = leave it to the site."""
+    addrs = list(dict.fromkeys(" ".join(ln.delivery_address.split()) for ln in lines if ln.delivery_address.strip()))
+    if not addrs:
+        return
+    sites = list(dict.fromkeys(site_for(a, table) for a in addrs))
+    if len(sites) > 1:
+        sh.flags.append(Flag("multiple_dc", "Lines of this shipment go to different DCs: " + " | ".join(addrs), "error"))
+        return
+    if not sites[0]:
+        st = state_of(addrs[0])
+        why = f"state {st} is not in the TO Site No list (Settings)" if st else "no 'ST 12345' at the end"
+        sh.flags.append(Flag("to_site_unknown", f"TO Site No unknown for \"{addrs[0]}\" ({why}) - pick it in the browser",
+                             "warning"))
+        return
+    sh.to_site_no = sites[0]
+    sh.delivery_address = addrs[0]
+    sh.label = sh.label[:-1] + f", TO {sites[0]})" if sh.label.endswith(")") else sh.label
+
+
 def _shipment(index: int, lines: list[POLine], factory: FactoryAddress, mode: str,
-              today: date | None = None) -> ShipmentPlan:
+              today: date | None = None, to_sites: dict[str, str] | None = None) -> ShipmentPlan:
     pos: list[str] = []
     for ln in lines:
         if ln.master_po not in pos:
@@ -43,6 +65,7 @@ def _shipment(index: int, lines: list[POLine], factory: FactoryAddress, mode: st
     label = f"Shipment {index} ({', '.join(pos)}{', ' + container if container else ''})"
     sh = ShipmentPlan(index=index, label=label, lines=planned, factory=factory, master_pos=pos,
                       container=container)
+    _to_site(sh, lines, to_sites if to_sites is not None else DEFAULT_TO_SITES)
     windows = [ln.window for ln in lines if ln.window]
     if lines and len(windows) == len(lines):
         sh.dates_source = "excel"
@@ -83,7 +106,7 @@ def build_plan(lines: list[POLine], factory: FactoryAddress, opts: PlanOptions, 
         chunks = list(groups.values())
     else:
         chunks = [list(sel)]
-    shipments = [_shipment(i, c, factory, mode, opts.today) for i, c in enumerate(chunks, 1)]
+    shipments = [_shipment(i, c, factory, mode, opts.today, opts.to_sites) for i, c in enumerate(chunks, 1)]
     return RunPlan(run_id=run_id or new_run_id(), source_file=source_file, sheet_name=sheet_name,
                    template_fingerprint=fingerprint, shipments=shipments, grouping=grouping,
                    dry_run=opts.dry_run, created_at=datetime.now().isoformat(timespec="seconds"),

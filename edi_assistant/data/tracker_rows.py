@@ -33,6 +33,7 @@ def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnM
     identity_cols = [cols[k] for k in ("container", "po") if k in cols]
     prev_master = ""
     prev_container = ""
+    prev_dest = ""
     lines: list[POLine] = []
     skipped: list[tuple[int, str]] = []
     flags: list[Flag] = []
@@ -72,6 +73,9 @@ def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnM
         container = parse_text_or_blank(grid.get_merged(r, cols["container"])) if "container" in cols else ""
         if not container and master == prev_master:
             container = prev_container
+        dest = parse_text_or_blank(grid.get_merged(r, cols["delivery_address"])) if "delivery_address" in cols else ""
+        if not dest and master == prev_master:
+            dest = prev_dest
         # numbers
         J = parse_decimal(cell(r, "quantity"))
         if (J is None or J == 0) and "edi_units" in cols:
@@ -112,7 +116,8 @@ def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnM
         pl = POLine(master_po=master, line=line or 0, excel_row=r, description=to_text(cell(r, "description")),
                     packages=cartons, quantity=J or Decimal(0), gross_weight=T, raw=raw,
                     model_no=to_text(cell(r, "model_no")), order_units=J, pack_qty=Q, gw_per_carton=T,
-                    start_ship=start, end_ship=end, existing_asn=asn, container=container, source_row=r,
+                    start_ship=start, end_ship=end, existing_asn=asn, container=container, delivery_address=dest,
+                    source_row=r,
                     line_no_text=to_text(cell(r, "line")), selected=(asn == ""))
         pl.flags += row_flags
         if asn:
@@ -121,7 +126,7 @@ def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnM
             pl.flags.append(Flag("master_po_inherited",
                                  f"Row {r}: master PO {master} inherited from the row above", "info"))
         lines.append(pl)
-        prev_master, prev_container = master, container
+        prev_master, prev_container, prev_dest = master, container, dest
     seen: dict[tuple[str, int], POLine] = {}
     for pl in lines:
         if not pl.line:

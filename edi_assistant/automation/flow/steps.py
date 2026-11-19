@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from playwright.sync_api import Error as PlaywrightError
 
+from edi_assistant.core.dc_sites import pick_option, same_site
 from edi_assistant.core.dates import compute_shipping_date, format_mdy, parse_date_token, parse_ship_dates
 from edi_assistant.core.errors import (DataMismatchError, ElementNotFoundError, PostconditionFailed, StepSkipped)
 from edi_assistant.core.events import InputField, ShipmentCreated
@@ -88,17 +89,41 @@ def _settle(ctx: "FlowContext") -> None:
             pass
 
 
-def _after_save(ctx: "FlowContext", navigated: bool, what: str, step_id: str) -> None:
+def _dialog_mark(ctx: "FlowContext") -> int:
+    d = getattr(ctx, "dialogs", None)
+    return d.count if d is not None else 0
+
+
+def _dialogs_text(ctx: "FlowContext", mark: int | None) -> str:
+    """Messages of the alerts/confirms the site showed since `mark` (they were auto-closed, so quote them)."""
+    d = getattr(ctx, "dialogs", None)
+    if d is None or mark is None:
+        return ""
+    parts = []
+    for typ, msg, accepted in d.since(mark):
+        msg = " ".join((msg or "").split())
+        if msg:
+            parts.append(f'"{msg}"' + ("" if typ == "alert" or accepted else " (answered Cancel)"))
+    return "; ".join(parts)
+
+
+def _after_save(ctx: "FlowContext", navigated: bool, what: str, step_id: str, dialog_mark: int | None = None) -> None:
     """Gate after every Save click: the page must have settled and show no error text, and a Save that did not
-    reload the page is a failure (the value read-back would otherwise just echo what we typed)."""
+    reload the page is a failure (the value read-back would otherwise just echo what we typed).
+    `dialog_mark` (from _dialog_mark before the click) lets the failure quote any popup the site showed."""
     _settle(ctx)
+    popups = _dialogs_text(ctx, dialog_mark)
     err = _visible_text(ctx, "ship.error_text")
     if err:
         raise PostconditionFailed(f"{what} error: {err}", message_vi="The site reported an error: " + err, step_id=step_id)
     if not navigated:
-        raise PostconditionFailed(f"page did not reload after Save ({what})",
-                                  message_vi="The page did not reload after Save; check the page in the browser",
-                                  step_id=step_id)
+        msg = "The page did not reload after Save"
+        if popups:
+            msg += f". The site showed: {popups}. Fix it in the browser, press Save there, then press Continue."
+        else:
+            msg += "; check the page in the browser"
+        raise PostconditionFailed(f"page did not reload after Save ({what})" + (f"; popups: {popups}" if popups else ""),
+                                  message_vi=msg, step_id=step_id)
 
 
 def _row_in(ctx: "FlowContext", row, key: str, vars: dict):
@@ -325,6 +350,36 @@ def _capture_ids(ctx: "FlowContext") -> bool:
     return True
 
 
+def _select_to_site(ctx: "FlowContext", step_id: str) -> None:
+    """TO Site No: a dropdown on a new shipment (pick the DC from the Delivery Address state);
+    older pages show it read-only, filled from the PO - then only compare."""
+    a, sh = ctx.actions, ctx.current_shipment
+    loc = ctx.resolver.try_resolve(ctx.page, "ship.to_site_select", None, NEG)
+    if loc is None:
+        ro = ctx.resolver.try_resolve(ctx.page, "ship.to_site_no", None, NEG)
+        got = a.value_of(ro) if ro is not None else ""
+        if got and sh.to_site_no and not same_site(got, sh.to_site_no):
+            ctx.warn(f"TO Site No on the page is {got}, Delivery Address says {sh.to_site_no}")
+        return
+    if not sh.to_site_no:
+        ctx.ask("to_site_missing",
+                "TO Site No is unknown (no Delivery Address / state in the tracker). Pick the DC in the "
+                "TO \"Site No\" dropdown in the browser (CA=512, NJ=053, GA=934), then press Continue.",
+                options=["continue", "abort"], step_id=step_id)
+        return
+    opts = loc.evaluate("el => [...el.options].map(o => [o.value, (o.text||'').trim()])")
+    hit = pick_option([(o[0], o[1]) for o in opts], sh.to_site_no)
+    if hit is None:
+        ctx.ask("to_site_not_in_list",
+                f"TO Site No {sh.to_site_no} is not in the dropdown ({', '.join(o[1] for o in opts if o[1])[:200]}). "
+                "Pick the right DC in the browser, then press Continue.", options=["continue", "abort"], step_id=step_id)
+        return
+    a.select_locator(loc, value=hit)
+    loc.dispatch_event("change")
+    if not _poll(lambda: a.read_value("ship.to_address1", timeout_ms=NEG), 3000, ctx):
+        ctx.warn(f"TO address not auto-filled after selecting Site No {sh.to_site_no}")
+
+
 class S6FillHeaderSave(Step):
     id = "S6.fill_header_save"
     title_vi = "Fill shipment header and Save"
@@ -353,6 +408,7 @@ class S6FillHeaderSave(Step):
                 ctx.warn("carrier not auto-filled after SCAC selection")
         a.fill("ship.bill_of_lading", cfg.bill_of_lading)
         a.fill("ship.pro_number", cfg.pro_number)
+        _select_to_site(ctx, self.id)
         if f.site_no:
             a.select("ship.from_site_no", label=f.site_no)
         a.fill("ship.from_name", f.name)
@@ -374,8 +430,9 @@ class S6FillHeaderSave(Step):
                     options=["continue", "abort"], step_id=self.id)
             sh.status = "dry_run"
             raise StepSkipped("dry run")
+        mark = _dialog_mark(ctx)
         navigated = a.click("ship.save_button", expect_navigation=True, nav_timeout_ms=SAVE_NAV_TIMEOUT_MS)
-        _after_save(ctx, navigated, "header", self.id)
+        _after_save(ctx, navigated, "header", self.id, mark)
         _capture_ids(ctx)
 
     def check(self, ctx: "FlowContext") -> bool:
@@ -565,8 +622,9 @@ class S8CreateCarton(Step):
         a.select("carton.packaging_code_select", label=cfg.packaging_code_carton, label_contains="Physical Container", vars=v)
         a.fill("carton.item_qty_per_carton_input", str(qpc), v, dispatch_change=True)
         a.fill("carton.site_cartons_per_site_input", str(cps), v, dispatch_change=True)
+        mark = _dialog_mark(ctx)
         navigated = a.click("carton.save_button", v, expect_navigation=True, nav_timeout_ms=SAVE_NAV_TIMEOUT_MS)
-        _after_save(ctx, navigated, "carton", self.id)   # a rejected Save re-renders the typed values: never trust the read-back alone
+        _after_save(ctx, navigated, "carton", self.id, mark)   # a rejected Save re-renders the typed values: never trust the read-back alone
         got_q = a.read_value("carton.item_qty_per_carton_input", v)
         got_c = a.read_value("carton.site_cartons_per_site_input", v)
         if got_q != str(qpc) or got_c != str(cps):
@@ -649,8 +707,9 @@ class S9EnterWeights(Step):
             a.fill("weight.row_weight_input", line.weight_text, v, dispatch_change=True)
             a.select("weight.row_um_select", label=ctx.config.flow.weight_um, vars=v)
             ctx.actions.resolve("weight.row_um_select", v)[0].dispatch_event("change")
+        mark = _dialog_mark(ctx)
         navigated = a.click("weight.save_button", expect_navigation=True, nav_timeout_ms=SAVE_NAV_TIMEOUT_MS)
-        _after_save(ctx, navigated, "weights", self.id)
+        _after_save(ctx, navigated, "weights", self.id, mark)
         self._ensure_all(ctx, len(lines))   # the page may fall back to 10 rows after saving
         for line in lines:
             v = self._wvars(ctx, line)

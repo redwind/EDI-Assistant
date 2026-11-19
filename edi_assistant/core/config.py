@@ -9,6 +9,7 @@ from pathlib import Path
 import yaml
 
 from . import paths
+from .dc_sites import DEFAULT_TO_SITES
 
 
 _runtime_mock_url = ""   # process-only override (--mock); never part of AppConfig, so it is never saved
@@ -59,6 +60,7 @@ class FlowConfig:
     pause_on_qty_warning: bool = True
     tracker_weight_mode: str = "per_carton_as_is"   # "per_carton_as_is" | "total_gw"
     review_between_shipments: bool = False          # True: S10 finished_review pause after every shipment; False: one final summary pause
+    to_sites: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_TO_SITES))   # Delivery Address state -> TO Site No
     past_date_policy: str = "clamp_today"   # "clamp_today" (binding default: silently use today) | "ask" (pause, let the user type a date)
 
 

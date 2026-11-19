@@ -109,6 +109,7 @@ FIELD_LABELS = {
     "asn": "ASN #", "model_no": "Model #", "start_ship": "EDI PO Start Ship", "end_ship": "EDI PO End Ship",
     "pack": "Pack (số lượng mỗi thùng)", "gw_per_carton": "Trọng lượng cả bì mỗi thùng (kg)", "container": "Container",
     "edi_units": "EDI Units (dùng khi Order Units trống)", "factory": "Tên nhà máy",
+    "delivery_address": "Địa chỉ giao hàng (-> TO Site No)",
 }
 
 # --- factory dialog
@@ -171,6 +172,8 @@ SET_WEIGHT_PER_CARTON = "Trọng lượng mỗi thùng (tổng / số thùng)"
 SET_WEIGHT_HELP = "Chỉ áp dụng cho packing list. Mặc định là tổng G.W. của dòng PO. Chọn 'mỗi thùng' nếu cổng yêu cầu trọng lượng từng thùng."
 SET_SHIPPING_TYPE = "Shipping Type"
 SET_TRANSPORT = "Transportation Method"
+SET_TO_SITES = "TO Site No theo bang"
+SET_TO_SITES_HELP = "Bang trong cột Delivery Address của tracker -> TO Site No (thông báo của EDI). Dạng: CA=512, NJ=053, GA=934"
 SET_SCAC = "Mã SCAC"
 SET_BOL = "Bill of Lading"
 SET_PRO = "PRO Number"

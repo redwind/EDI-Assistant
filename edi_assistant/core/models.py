@@ -10,7 +10,7 @@ FIELD_KEYS: tuple[str, ...] = ("po", "line", "description", "packages", "quantit
                                # v2 (PO tracker)
                                "asn", "model_no", "start_ship", "end_ship", "pack", "gw_per_carton", "container",
                                # v3 (tracker extracted from the PO PDF)
-                               "edi_units", "factory")
+                               "edi_units", "factory", "delivery_address")
 REQUIRED_FIELDS: tuple[str, ...] = ("po", "packages", "quantity", "gross_weight")   # = packing_list requirements
 PROFILES: tuple[str, ...] = ("packing_list", "po_tracker")
 REQUIRED_BY_PROFILE: dict[str, tuple[str, ...]] = {
@@ -19,7 +19,7 @@ REQUIRED_BY_PROFILE: dict[str, tuple[str, ...]] = {
 }
 OPTIONAL_BY_PROFILE: dict[str, tuple[str, ...]] = {
     "packing_list": ("line", "description", "net_weight", "size"),
-    "po_tracker": ("asn", "model_no", "description", "container", "edi_units", "factory"),
+    "po_tracker": ("asn", "model_no", "description", "container", "edi_units", "factory", "delivery_address"),
 }
 
 
@@ -53,6 +53,7 @@ class POLine:
     end_ship: date | None = None
     existing_asn: str = ""
     container: str = ""
+    delivery_address: str = ""
     source_row: int = 0
     selected: bool = True
 
@@ -135,7 +136,8 @@ class ShipmentPlan:
     shipping_date: date | None = None
     date_result: ShipDateResult | None = None
     po_windows: dict[str, DateWindow] = field(default_factory=dict)
-    to_site_no: str = ""
+    to_site_no: str = ""                 # planned from the Delivery Address, then read back from the page
+    delivery_address: str = ""
     web_shipment_id: str = ""
     asn_shipment_id: str = ""
     status: str = "pending"

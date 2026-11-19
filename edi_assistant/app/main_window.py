@@ -254,7 +254,7 @@ class MainWindow(QMainWindow):
     def _plan_options(self) -> PlanOptions:
         return PlanOptions("per_master_po" if self.rb_master.isChecked() else "per_file",
                            self.cb_dry.isChecked(), self.cfg.flow.weight_mode, profile=self._profile(),
-                           tracker_weight_mode=self.cfg.flow.tracker_weight_mode)
+                           tracker_weight_mode=self.cfg.flow.tracker_weight_mode, to_sites=self.cfg.flow.to_sites)
 
     def _apply_profile_ui(self) -> None:
         """PO-tracker files always create one shipment per master PO: force the radio and disable it."""

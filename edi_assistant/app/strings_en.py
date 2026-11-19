@@ -109,6 +109,7 @@ FIELD_LABELS = {
     "asn": "ASN #", "model_no": "Model #", "start_ship": "EDI PO Start Ship", "end_ship": "EDI PO End Ship",
     "pack": "Pack (units per carton)", "gw_per_carton": "Gross weight per carton (kg)", "container": "Container",
     "edi_units": "EDI Units (used when Order Units is empty)", "factory": "Factory name",
+    "delivery_address": "Delivery Address (-> TO Site No)",
 }
 
 # --- factory dialog
@@ -171,6 +172,8 @@ SET_WEIGHT_PER_CARTON = "Weight per carton (total / cartons)"
 SET_WEIGHT_HELP = "Packing-list files only. Default is the line's total G.W. Choose 'per carton' if the portal expects a weight per carton."
 SET_SHIPPING_TYPE = "Shipping Type"
 SET_TRANSPORT = "Transportation Method"
+SET_TO_SITES = "TO Site No by state"
+SET_TO_SITES_HELP = "State in the tracker's Delivery Address -> TO Site No (EDI notice). Format: CA=512, NJ=053, GA=934"
 SET_SCAC = "SCAC code"
 SET_BOL = "Bill of Lading"
 SET_PRO = "PRO Number"
