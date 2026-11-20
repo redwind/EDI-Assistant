@@ -23,6 +23,7 @@ _TEMPLATED = ("css", "xpath", "text", "name", "has_text")
 
 
 PROBE_MS = 300   # budgets at or below this are optional/negative probes: a single candidate sweep, no sleeping
+VISIBLE_SCAN_MAX = 10   # matches checked for visibility when the first one is hidden
 
 
 @dataclass(slots=True)
@@ -269,6 +270,10 @@ class SelectorResolver:
                         pick = loc.first
                         if not require_visible or pick.is_visible():
                             return pick, cand
+                        if cand.nth is None:   # first match hidden (e.g. a template copy): take the first visible one
+                            for i in range(1, min(n, VISIBLE_SCAN_MAX)):
+                                if loc.nth(i).is_visible():
+                                    return loc.nth(i), cand
                 except (_Skip, ElementNotFoundError):
                     continue
                 except PlaywrightError:

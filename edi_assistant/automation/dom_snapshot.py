@@ -71,4 +71,11 @@ def capture(session: BrowserSession, run_dir: Path, tag: str, with_image: bool =
             snap.screenshot_path = str(path)
         except Exception:
             pass
+        try:   # full page HTML next to the screenshot (emails redacted), for fixing selectors on the real site
+            safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", tag)
+            html = Path(run_dir) / "shots" / f"{time.strftime('%H%M%S')}_{safe}.html"
+            html.parent.mkdir(parents=True, exist_ok=True)
+            html.write_text(EMAIL_RE.sub("[redacted]", page.content()), encoding="utf-8")
+        except Exception:
+            pass
     return snap

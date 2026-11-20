@@ -19,7 +19,7 @@ EXPECTED_KEYS = [
     "ship.shipping_date", "ship.transportation_method", "ship.scac_code", "ship.carrier",
     "ship.bill_of_lading", "ship.pro_number", "ship.from_site_no", "ship.from_name", "ship.from_address1",
     "ship.from_address2", "ship.from_city", "ship.from_state", "ship.from_zip", "ship.from_country",
-    "ship.from_country_more_link", "ship.to_site_no", "ship.to_address1", "ship.save_button",
+    "ship.from_country_more_link", "ship.to_site_no", "ship.to_site_select", "ship.to_address1", "ship.save_button",
     "ship.selected_pos_button", "ship.submit_asn_button", "ship.error_text", "pos.form", "pos.tab_selected",
     "pos.tab_search", "pos.search_po_input", "pos.search_button", "pos.search_row",
     "pos.search_row_checkbox", "pos.add_selected_button", "pos.selected_row", "pos.row_status_text",

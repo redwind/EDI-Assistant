@@ -97,10 +97,14 @@ keys:
   # ---------- selected purchase orders selected_pos.do (V except search tab) ----------
   pos.form:                        {page: pos, verified: true, description: "Selected POs form", candidates: [{kind: css, css: "form[name='form1']"}]}
   pos.tab_selected:                {page: pos, verified: true, description: "Tab 'Selected Purchase Orders'",
-    candidates: [{kind: role, role: link, name: "Selected Purchase Orders"}, {kind: text, text: "Selected Purchase Orders", exact: true}]}
+    candidates: [{kind: role, role: link, name: "Selected Purchase Orders"}, {kind: text, text: "Selected Purchase Orders", exact: true},
+                 {kind: css, css: "input[type='button'][value='Selected Purchase Orders'], input[type='submit'][value='Selected Purchase Orders'], button:text-is('Selected Purchase Orders')"}, {kind: role, role: button, name: "Selected Purchase Orders", exact: true},
+                 {kind: xpath, xpath: "//*[normalize-space(@value)='Selected Purchase Orders' or normalize-space(@alt)='Selected Purchase Orders' or normalize-space(@title)='Selected Purchase Orders' or (not(self::script) and normalize-space(text())='Selected Purchase Orders')]"}]}
   pos.tab_search:                  {page: pos, verified: false, description: "Tab 'Search Purchase Orders'",
     candidates: [{kind: role, role: link, name: "Search Purchase Orders"}, {kind: text, text: "Search Purchase Orders", exact: true},
-                 {kind: css, css: "a[href*='search_pos'], a[href*='searchPurchase'], a[href*='tab=search']"}]}
+                 {kind: css, css: "a[href*='search_pos'], a[href*='searchPurchase'], a[href*='tab=search'], a[href*='search_po' i], a:has(img[src*='search_p' i]), a:has(img[src*='searchp' i]), [onclick*='search_po' i], [onclick*='searchPO' i]"},
+                 {kind: css, css: "input[type='button'][value='Search Purchase Orders'], input[type='submit'][value='Search Purchase Orders'], button:text-is('Search Purchase Orders')"}, {kind: role, role: button, name: "Search Purchase Orders", exact: true},
+                 {kind: xpath, xpath: "//*[normalize-space(@value)='Search Purchase Orders' or normalize-space(@alt)='Search Purchase Orders' or normalize-space(@title)='Search Purchase Orders' or (not(self::script) and normalize-space(text())='Search Purchase Orders')]"}]}
   pos.search_po_input:             {page: pos, verified: false, description: "'Purchase Order No' filter box on Search tab",
     candidates: [{kind: label, text: "Purchase Order No"}, {kind: css, css: "input[name*='purchaseOrderNo' i], input[name*='poNo' i], input[name*='orderNo' i]"},
                  {kind: xpath, xpath: "//td[contains(normalize-space(),'Purchase Order No')]/following::input[@type='text'][1]"}]}
