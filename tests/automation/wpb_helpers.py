@@ -1,6 +1,7 @@
 """Shared helpers for WP-B tests."""
 from __future__ import annotations
 
+import os
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
@@ -18,7 +19,7 @@ def make_config(server: MockServer) -> AppConfig:
     cfg = AppConfig()
     cfg.site.use_mock = True
     cfg.site.mock_url = server.url
-    cfg.browser.channel = "chromium"
+    cfg.browser.channel = os.environ.get("EDI_TEST_BROWSER_CHANNEL", "chromium")   # e.g. "chrome" where no Playwright Chromium is installed
     cfg.browser.headless = True
     cfg.browser.default_timeout_ms = 8000
     cfg.pace.enabled = False   # human-pace delays off by default in tests (dedicated tests enable it with tiny values)

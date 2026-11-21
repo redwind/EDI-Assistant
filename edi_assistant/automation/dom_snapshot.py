@@ -64,16 +64,15 @@ def capture(session: BrowserSession, run_dir: Path, tag: str, with_image: bool =
     except Exception:
         pass
     if with_image:
+        stem = Path(run_dir) / "shots" / f"{time.strftime('%H%M%S')}_{re.sub(r'[^A-Za-z0-9_.-]+', '_', tag)}"
         try:
-            safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", tag)
-            path = Path(run_dir) / "shots" / f"{time.strftime('%H%M%S')}_{safe}.jpg"
+            path = stem.parent / (stem.name + ".jpg")   # not with_suffix: step ids contain dots
             snap.screenshot_jpeg = session.screenshot_jpeg(path)
             snap.screenshot_path = str(path)
         except Exception:
             pass
         try:   # full page HTML next to the screenshot (emails redacted), for fixing selectors on the real site
-            safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", tag)
-            html = Path(run_dir) / "shots" / f"{time.strftime('%H%M%S')}_{safe}.html"
+            html = stem.parent / (stem.name + ".html")
             html.parent.mkdir(parents=True, exist_ok=True)
             html.write_text(EMAIL_RE.sub("[redacted]", page.content()), encoding="utf-8")
         except Exception:

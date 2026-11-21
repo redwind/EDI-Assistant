@@ -93,6 +93,8 @@ INSTALL_CHROMIUM_FAIL = "Cài Chromium không thành công. Xem tab Nhật ký h
 
 # --- mapping dialog
 MAPPING_TITLE = "Ánh xạ cột Excel"
+PROFILE_FIELD_LABELS = {"po_tracker": {"quantity": "Order Units", "gw_per_carton": "Trọng lượng cả bì (G.W.) mỗi thùng, kg"}}
+MAPPING_COMPUTED = {"po_tracker": "Số thùng (Cartons) = Order Units ÷ Pack (tự tính; nếu Order Units trống thì dùng EDI Units). Trọng lượng nhập lên EDI = trọng lượng cả bì mỗi thùng."}
 MAPPING_HINT = "Chọn cột Excel tương ứng cho từng trường (* là bắt buộc)."
 MAPPING_COL_FIELD = "Trường"
 MAPPING_COL_COLUMN = "Cột Excel"

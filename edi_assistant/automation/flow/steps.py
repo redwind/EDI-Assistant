@@ -23,6 +23,7 @@ if TYPE_CHECKING:
     from .context import FlowContext
 
 ADD_CONFIRM = r"do you want to add the selected"
+SAVE_CHANGES_CONFIRM = r"do you want to save the changes"   # carton / weight Save ("... made on this page?"), PO row Save ("... ?")   # carton / weight Save (checkAndSaveCarton)
 NEG = 250   # ms budget for negative existence probes (page already loaded)
 ERROR_SCAN_MAX = 20   # post-Save error scan: how many matches per candidate are inspected
 _HAS_WORD = re.compile(r"[^\W\d_]{3,}", re.UNICODE)   # an error message carries words; a lone red '*' marker does not
@@ -479,7 +480,13 @@ class S7AddPurchaseOrders(Step):
                 a.fill("pos.search_po_input", po, v)
                 a.click("pos.search_button", v, expect_navigation=True)
                 row, _ = a.resolve("pos.search_row", v, 6000)
-                row.locator("input[type='checkbox']").first.check()
+                boxes = row.locator("input[type='checkbox']")
+                if po not in " ".join(row.inner_text().split()) or boxes.count() != 1:
+                    raise PostconditionFailed(f"search row for PO {po} is ambiguous",
+                                              message_vi=f"Could not single out the row of PO {po} in the search "
+                                                         "results; tick it and press Add Selected in the browser",
+                                              step_id=self.id)
+                boxes.first.check()
                 ctx.dialogs.expect_accept(ADD_CONFIRM)
                 a.click("pos.add_selected_button", v, expect_navigation=True)
                 if not a.exists("pos.selected_row", v, 6000):
@@ -489,8 +496,8 @@ class S7AddPurchaseOrders(Step):
                                                   message_vi=f"PO {po} is not in the selected list yet", step_id=self.id)
             line.status = "added"
             row, _ = a.resolve("pos.selected_row", v, 4000)
-            status = _row_in(ctx, row, "pos.row_status_text", v).inner_text().strip()
-            if status.lower() == "replaced":
+            cells = [c.strip().lower() for c in row.locator("td").all_inner_texts()]   # Status column position differs (mock 3rd, real 4th)
+            if "replaced" in cells:
                 line.po_line.flags.append(Flag("po_replaced", f"PO {po} has been replaced", "error"))
                 resp = ctx.ask("po_replaced",
                                f'PO {po} has been replaced. Handle it manually following the "PO replaced" procedure, then press Continue, or Skip this line.',
@@ -518,6 +525,14 @@ def _row_vars(ctx: "FlowContext", line: PlannedLine) -> dict:
     return v
 
 
+def _on_sites_search(ctx: "FlowContext") -> bool:
+    """The carton's 'Search Sites' page (title 'BCF EDI Gateway -- Search Purchase Order Sites')."""
+    try:
+        return "search purchase order sites" in ctx.session.title().lower() or "search_sites.do" in ctx.session.url()
+    except PlaywrightError:
+        return False
+
+
 class S8CreateCarton(Step):
     selector_keys = ("pos.row_create_carton_button", "carton.page_marker", "carton.item_po_row", "carton.site_row",
                      "carton.packaging_code_select", "carton.item_qty_per_carton_input",
@@ -529,14 +544,20 @@ class S8CreateCarton(Step):
         self.id = f"S8.create_carton[{self.po}]"
         self.title_vi = f"Create cartons for PO {self.po}"
 
-    def _add_via_search(self, ctx, tab_key: str, row_key: str, add_key: str, v: dict) -> None:
+    def _add_via_search(self, ctx, tab_key: str, row_key: str, add_key: str, v: dict, skip_tab: bool = False) -> None:
         a = ctx.actions
-        try:
-            a.click(tab_key, v, timeout_ms=1500, expect_navigation=True)
-        except ElementNotFoundError:
-            pass   # tab may be absent
+        if not skip_tab:
+            try:
+                a.click(tab_key, v, timeout_ms=1500, expect_navigation=True)
+            except ElementNotFoundError:
+                pass   # tab may be absent
         row, _ = a.resolve(row_key, v, 4000)
-        row.locator("input[type='checkbox']").first.check()
+        boxes = row.locator("input[type='checkbox']")
+        if boxes.count() != 1:
+            raise PostconditionFailed(f"{row_key}: {boxes.count()} checkboxes in the row",
+                                      message_vi="Could not single out the row to tick; tick it and press Add Selected "
+                                                 "in the browser", step_id=self.id)
+        boxes.first.check()
         ctx.dialogs.expect_accept(ADD_CONFIRM)
         a.click(add_key, v, expect_navigation=True)
 
@@ -552,14 +573,23 @@ class S8CreateCarton(Step):
             if not a.exists("carton.page_marker", v, 8000):
                 raise PostconditionFailed("carton page not shown", message_vi="Could not open the carton page", step_id=self.id)
         v = ctx.vars(line)
-        if not a.exists("carton.item_po_row", v, 300):
+        if not a.exists("carton.item_po_row", v, 300) and not _on_sites_search(ctx):
             self._add_via_search(ctx, "carton.tab_items_search", "carton.items_search_row", "carton.items_add_selected", v)
-            if not a.exists("carton.item_po_row", v, 8000):
+            # the real site moves straight on to "Search Sites" after the item is added
+            if not _on_sites_search(ctx) and not a.exists("carton.item_po_row", v, 8000):
                 raise PostconditionFailed("item row missing", message_vi="Could not add the item to the carton", step_id=self.id)
-        if not a.exists("carton.site_row", v, 300):
-            self._add_via_search(ctx, "carton.tab_sites_search", "carton.sites_search_row", "carton.sites_add_selected", v)
+        if _on_sites_search(ctx) or not a.exists("carton.site_row", v, 300):
+            if not v.get("site_no"):
+                raise PostconditionFailed("TO site unknown", message_vi="TO Site No is unknown, so the site to add to "
+                                          "the carton is unknown; tick it on Search Sites and press Add Selected",
+                                          step_id=self.id)
+            self._add_via_search(ctx, "carton.tab_sites_search", "carton.sites_search_row", "carton.sites_add_selected", v,
+                                 skip_tab=_on_sites_search(ctx))
             if not a.exists("carton.site_row", v, 8000):
                 raise PostconditionFailed("site row missing", message_vi="Could not add the site to the carton", step_id=self.id)
+        if not a.exists("carton.item_po_row", v, 3000):
+            raise PostconditionFailed("item row missing", message_vi="The item is not in the carton (Selected Items)",
+                                      step_id=self.id)
         ordered = _dec(a.read_text("carton.item_qty_ordered_cell", v))
         um = a.read_text("carton.item_um_cell", v).strip()
         prepack: int | None = None
@@ -623,6 +653,7 @@ class S8CreateCarton(Step):
         a.fill("carton.item_qty_per_carton_input", str(qpc), v, dispatch_change=True)
         a.fill("carton.site_cartons_per_site_input", str(cps), v, dispatch_change=True)
         mark = _dialog_mark(ctx)
+        ctx.dialogs.expect_accept(SAVE_CHANGES_CONFIRM)
         navigated = a.click("carton.save_button", v, expect_navigation=True, nav_timeout_ms=SAVE_NAV_TIMEOUT_MS)
         _after_save(ctx, navigated, "carton", self.id, mark)   # a rejected Save re-renders the typed values: never trust the read-back alone
         got_q = a.read_value("carton.item_qty_per_carton_input", v)
@@ -654,7 +685,10 @@ class S8bSetPartial(Step):
         a = ctx.actions
         v = _row_vars(ctx, self.line)
         a.select("pos.row_complete_partial_select", label=ctx.config.flow.complete_partial, vars=v)
-        a.click("pos.row_save_button", v, expect_navigation=True)
+        mark = _dialog_mark(ctx)
+        ctx.dialogs.expect_accept(SAVE_CHANGES_CONFIRM)   # saveCarton(): confirm("Do you want to save the changes ?")
+        navigated = a.click("pos.row_save_button", v, expect_navigation=True, nav_timeout_ms=SAVE_NAV_TIMEOUT_MS)
+        _after_save(ctx, navigated, "complete/partial", self.id, mark)   # the select shows Partial even when not saved
 
     def check(self, ctx: "FlowContext") -> bool:
         if self.line.status == "skipped":
@@ -708,13 +742,14 @@ class S9EnterWeights(Step):
             a.select("weight.row_um_select", label=ctx.config.flow.weight_um, vars=v)
             ctx.actions.resolve("weight.row_um_select", v)[0].dispatch_event("change")
         mark = _dialog_mark(ctx)
+        ctx.dialogs.expect_accept(SAVE_CHANGES_CONFIRM)
         navigated = a.click("weight.save_button", expect_navigation=True, nav_timeout_ms=SAVE_NAV_TIMEOUT_MS)
         _after_save(ctx, navigated, "weights", self.id, mark)
         self._ensure_all(ctx, len(lines))   # the page may fall back to 10 rows after saving
         for line in lines:
             v = self._wvars(ctx, line)
             got = a.read_value("weight.row_weight_input", v)
-            if got != line.weight_text:
+            if _dec(got) != _dec(line.weight_text):   # the site echoes 1.00 back as "1.0"
                 raise PostconditionFailed(f"weight not saved for {line.po_line.po_line_id}: {got!r}",
                                           message_vi=f"Weight of PO {line.po_line.po_line_id} was not saved", step_id=self.id)
             line.status = "weight_done"

@@ -21,6 +21,7 @@ class DialogPolicy:
         self._expires = 0.0
         self.history: list[tuple[str, str, bool]] = []
         self.count = 0   # dialogs seen so far (never trimmed): mark before an action, read with since()
+        self.manual = False   # True while the run waits for the user: their own clicks' popups are theirs to answer
 
     def install(self, page: Page) -> None:
         page.on("dialog", self._handle)
@@ -55,6 +56,10 @@ class DialogPolicy:
 
     def _handle(self, dialog: Dialog) -> None:
         typ, msg = dialog.type, dialog.message
+        if self.manual:
+            # the user is working in the browser (the run is paused): leave the popup open for them to answer
+            self._note("INFO", f"dialog {typ} left to the user: {msg}")
+            return
         try:
             if typ in ("alert", "beforeunload"):
                 self._note("INFO", f"dialog {typ}: {msg}")

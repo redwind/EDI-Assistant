@@ -48,8 +48,12 @@ class MappingDialog(QDialog):
         self.table = QTableWidget(len(FIELD_KEYS), 3)
         self.table.setHorizontalHeaderLabels([S.MAPPING_COL_FIELD, S.MAPPING_COL_COLUMN, S.MAPPING_COL_CONF])
         self.table.horizontalHeader().setStretchLastSection(True)
+        self.computed_note = QLabel("")
+        self.computed_note.setWordWrap(True)
+        self.computed_note.setStyleSheet("color:#1a73e8")
         self._populate_table()
         lay.addWidget(self.table, 3)
+        lay.addWidget(self.computed_note)
         self.profile_combo.currentIndexChanged.connect(self._on_profile_changed)
 
         # header + data preview
@@ -91,8 +95,10 @@ class MappingDialog(QDialog):
         req = REQUIRED_BY_PROFILE[self._profile]
         opt = OPTIONAL_BY_PROFILE[self._profile]
         self._combos = {}
+        labels = {**S.FIELD_LABELS, **S.PROFILE_FIELD_LABELS.get(self._profile, {})}
+        hide_unused = self._profile == "po_tracker"   # PO tracker: show only the columns this format uses
         for r, key in enumerate(self.field_order()):
-            label = S.FIELD_LABELS.get(key, key) + (" *" if key in req else "")
+            label = labels.get(key, key) + (" *" if key in req else "")
             item = QTableWidgetItem(label)
             if key not in req and key not in opt:
                 item.setForeground(QBrush(QColor("#8a8a8a")))
@@ -102,6 +108,10 @@ class MappingDialog(QDialog):
             for c in self._det.columns:
                 combo.addItem(f"{c.letter} — {c.joined}", c.letter)
             letter = self._letters.get(key)
+            unused = key not in req and key not in opt
+            self.table.setRowHidden(r, hide_unused and unused)
+            if hide_unused and unused:
+                letter = None   # e.g. Cartons / total G.W.: computed from the tracker, never read from a column
             if letter is not None:
                 idx = combo.findData(letter)
                 if idx >= 0:
@@ -117,6 +127,9 @@ class MappingDialog(QDialog):
             self.table.setItem(r, 2, conf)
         self.table.resizeColumnToContents(0)
         self.table.setColumnWidth(1, 380)
+        note = S.MAPPING_COMPUTED.get(self._profile, "")
+        self.computed_note.setText(note)
+        self.computed_note.setVisible(bool(note))
 
     def _on_profile_changed(self, *_a) -> None:
         """New profile: refill every combo from suggest_mapping(det, profile) (earlier manual edits are dropped)."""

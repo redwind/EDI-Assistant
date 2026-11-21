@@ -74,6 +74,9 @@ def test_mapping_dialog_profile_switch(qtbot, tracker_xlsx, sample_xlsx):
     assert dlg.profile_combo.currentData() == "po_tracker"
     assert dlg.field_order()[: len(REQUIRED_BY_PROFILE["po_tracker"])] == list(REQUIRED_BY_PROFILE["po_tracker"])
     assert dlg.table.item(0, 0).text().endswith("*")
+    shown = {dlg.field_order()[r] for r in range(dlg.table.rowCount()) if not dlg.table.isRowHidden(r)}
+    assert "packages" not in shown and "gross_weight" not in shown and "gw_per_carton" in shown
+    assert "Order Units" in dlg.computed_note.text() and "Pack" in dlg.computed_note.text()
     dlg._on_accept()
     m, _ = dlg.result()
     assert m.profile == "po_tracker" and m.is_complete()

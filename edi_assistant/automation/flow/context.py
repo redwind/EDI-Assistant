@@ -19,6 +19,7 @@ from edi_assistant.data.results import ResultsWriter
 
 from ..actions import SafeActions
 from ..dialogs import DialogPolicy
+from ..dom_snapshot import capture
 from ..healing import Healer
 from ..pace import Pacer
 from ..selectors import SelectorResolver, SelectorStore
@@ -85,12 +86,23 @@ class FlowContext:
     def ask(self, kind: str, message_vi: str, *, options: list[str] | None = None,
             input_fields: list[InputField] | None = None, step_id: str = "", screenshot_path: str = "",
             ai_explanation_vi: str = "") -> UserResponse:
-        """Pause for the user; 'abort' raises UserAbortError."""
+        """Pause for the user; 'abort' raises UserAbortError.
+        Every pause is logged and, unless the caller already captured one, saves a screenshot + page HTML."""
+        self.log.warning("waiting for user [%s]%s: %s", kind, f" at {step_id}" if step_id else "", message_vi)
+        if not screenshot_path:
+            screenshot_path = capture(self.session, self.run_dir, step_id or kind).screenshot_path
         ev = NeedsUser(request_id=uuid.uuid4().hex, kind=kind, message_vi=message_vi, step_id=step_id,
                        screenshot_path=screenshot_path, ai_explanation_vi=ai_explanation_vi,
                        options=options if options is not None else ["continue", "skip", "abort"],
                        input_fields=input_fields or [])
-        resp = self.ask_user(ev)
+        dialogs = getattr(self, "dialogs", None)
+        if dialogs is not None:
+            dialogs.manual = True    # while paused, popups from the user's own clicks are not auto-answered
+        try:
+            resp = self.ask_user(ev)
+        finally:
+            if dialogs is not None:
+                dialogs.manual = False
         if resp.action == "abort":
             raise UserAbortError("aborted by user", message_vi="Aborted by user")
         return resp

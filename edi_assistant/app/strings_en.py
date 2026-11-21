@@ -93,6 +93,8 @@ INSTALL_CHROMIUM_FAIL = "Chromium installation failed. See the Log tab or try ag
 
 # --- mapping dialog
 MAPPING_TITLE = "Excel column mapping"
+PROFILE_FIELD_LABELS = {"po_tracker": {"quantity": "Order Units", "gw_per_carton": "Gross weight (G.W.) per carton, kg"}}
+MAPPING_COMPUTED = {"po_tracker": "Cartons = Order Units ÷ Pack (computed; EDI Units is used when Order Units is empty). Weight entered on EDI = Gross weight per carton."}
 MAPPING_HINT = "Choose the Excel column for each field (* is required)."
 MAPPING_COL_FIELD = "Field"
 MAPPING_COL_COLUMN = "Excel column"

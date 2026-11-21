@@ -1,0 +1,261 @@
+<!-- Real 'Search Purchase Orders' page (BCF EDI Gateway, Nov 2026), trimmed: styles/scripts removed, 3 rows. -->
+<html><head>
+<title>BCF EDI Gateway -- Search Purchase Orders</title>
+<style type="text/css">.switchcontent{display:none;}</style>
+</head>
+<body>
+<div id="edigateway" align="center">
+<form name="new_shipment" method="post" action="search_po.do">
+	<input type="hidden" value="N" name="allowToAddPo" style="">
+<div class="top">
+<table width="900" cellpadding="0" cellspacing="0" border="0">
+    <tbody><tr valign="middle"> 
+        <td align="left">
+        	<a href="../index.jsp">Home</a><br><a href="../vendor.do?">Main Vendor</a><table width="120">
+        		<tbody><tr align="left">  </tr>
+        		<tr align="left">  </tr>
+        	</tbody></table>
+        </td>
+        <td align="left"><img src="../images/bcflogo_heart.gif" width="204" height="48" alt="Burlington Stores EDI Testing"></td>
+        <td align="center" class="sitename">EDI Gateway</td>
+        <td class="header">
+        <text style="font-size:16px; font-family:'Courier New'"><strong>PRD | I</strong></text><br>
+	[redacted] is logged in <br> as <b>Vendor</b> | <a href="../login.do?logout">Logout</a>
+		</td>
+    </tr>
+</tbody></table>
+</div>
+  <div id="inboxtabs">
+  	<table id="inboxtabstable" cellpadding="0" cellspacing="0" border="0">
+  	<tbody><tr>
+  		<td>
+		  	<a href="inbox.do?action=refreshorders">
+			  			<img src="../images/inbox_off_tab.gif">
+		  	</a>
+		  			<a href="outbox.do?action=refreshorders">
+						  		<img src="../images/outbox_off_tab.gif">
+				  	</a>
+				  	<a href="drafts.do">
+						  		<img src="../images/shipments_on_tab.gif">
+				  	</a>
+		</td>
+	</tr>
+	</tbody></table>
+  </div>
+<table width="760" border="0" cellpadding="0" cellspacing="0" id="inboxholder">
+	<tbody>
+		<tr>
+			<td>
+			<table border="0" cellspacing="5" cellpadding="0" id="inboxheadingtable">
+				<tbody>
+					<tr>
+						<td class="vendorname">VENDOR</td>
+						<td class="helplink">
+							<a href="/vms-gateway/pdfs/bcf_help.pdf#pagemode=bookmarks" target="_blank" title="Click here for help.">Help</a>
+							<a href="/vms-gateway/pages/help/Online_Help.jsp" target="_blank" title="Click here to view Audio/visual help."><img src="/vms-gateway/images/film.png"></a>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			</td>
+		</tr>
+		<tr>
+			<td>
+<div id="secondleveltabs">
+	&nbsp;
+  	<a href="drafts.do">
+		      	<img src="/vms-gateway/images/sub_drafts_off_tab.gif" width="94" height="20" border="0" align="absbottom">
+  	</a>
+  	<a href="new_shipment.do">
+		      	<img src="/vms-gateway/images/sub_newshipmemt_on_tab.gif" width="129" height="20" border="0" align="absbottom">
+  	</a>
+  	<a href="archives.do">
+		      	<img src="/vms-gateway/images/events_off_tab.gif" alt="Events" width="93" height="20" border="0" align="absbottom">
+  	</a>
+</div>
+			</td>
+		</tr>
+		<tr>
+			<td>
+			<table id="containertable">
+			<tbody>
+			<tr>
+				<td>
+				<table id="breadcrumbsholder">
+				<tbody>
+					<tr>
+						<td>
+							<strong>Search Purchase Orders</strong>
+						</td><td>
+					</td></tr>
+					<tr>
+						<td>
+  				Web Shipment ID: 
+				<a href="new_shipment.do?shipment_id=883615">
+  					883615
+  				</a>
+				<strong>&gt;&gt;</strong>
+						Selecting Purchase Orders
+						</td>
+					</tr>
+				</tbody>
+				</table>
+				</td>
+			</tr>
+			<tr>
+				<td>
+<div id="thirdleveltabs">
+	  	<a href="selected_pos.do">
+		      	<img src="/vms-gateway/images/selectedpo_off_tab.gif" width="166" height="20" align="absbottom">
+  	</a>
+	  			<a href="search_po.do">
+	           	<img src="/vms-gateway/images/searchpo_on_tab.gif" width="166" height="20" border="0" align="absbottom">
+ 	</a>
+</div>
+				<table id="containertable">
+					<tbody>
+					<tr>
+						<td>
+					<table id="filtertable" border="0" cellpadding="0" cellspacing="0">
+						<tbody>
+							<tr>
+								<td>Filter:</td>
+								<td>
+								<table id="filter_status">
+									<tbody>
+										<tr>
+											<td>Purchase Order No</td>
+											<td><input name="PO_NO" id="PO_NO" size="25" maxlength="15" value="" style=""></td>
+										</tr>
+									</tbody>
+								</table>
+								</td>
+								<td>
+								<table id="filter_status">
+									<tbody>
+										<tr>
+											<td>Status</td>
+											<td>
+												<select name="status" size="1" class="field">
+					                                        <option value="" selected="">
+					                                        	All
+					                                        </option>
+					                                        <option value="A">
+					                                        	Available
+					                                        </option>
+					                                        <option value="P">
+					                                        	Partially Shipped
+					                                        </option>
+												</select>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+								</td>
+								<td>
+								<table id="filterbuttonstable">
+									<tbody>
+										<tr>
+											<td>
+												<input name="submit" type="submit" value="Search" style="">
+												<input name="reset" type="reset" value="Reset" onclick="return resetConfirm()" style="">
+											</td>
+										</tr>
+									</tbody>
+								</table>
+								</td>
+							</tr>
+						</tbody>
+					</table> 
+					</td>
+				</tr>
+				<tr>
+					<td>
+							<table border="0" cellspacing="5" cellpadding="0" id="pagelinkstable">
+								<tbody><tr valign="middle">
+									<td>101 Orders found, displaying all Orders.</td>
+											<td class="links">
+												Show <select name="orderperpage" onchange="OnChangeOrdersPerPage(document.new_shipment.orderperpage);">
+													<option value="10">10</option>
+													<option value="15">15</option>
+													<option value="20">20</option>
+													<option value="25" selected="">25</option>
+													<option value="100000" selected="">All</option>	
+												</select> Orders Per Page
+											</td>
+									<td class="links"><strong>1</strong></td>
+								</tr>
+							</tbody></table>
+<table class="simple" id="pos">
+<thead>
+<tr>
+<th><a href="javascript:selectAllCheckBoxes('CB_');">All <br> </a><a href="javascript:unSelectAllCheckBoxes('CB_');">None</a></th>
+<th class="sortable">
+<a href="search_po.do?d-16522-o=2&amp;paging=yes&amp;d-16522-p=1&amp;d-16522-s=1">Purchase Order No</a></th>
+<th class="sortable">
+<a href="search_po.do?d-16522-o=2&amp;paging=yes&amp;d-16522-p=1&amp;d-16522-s=2">Status</a></th></tr></thead>
+<tbody>
+<tr class="odd">
+<td>
+							<input type="checkbox" name="CB_31350218" onclick="return toggleBoxes(this)" style="">
+						</td>
+<td>
+					    	<a href="view_order.do?order_id=31350218&amp;orderNo=672343303">
+					    		672343303
+					    	</a>
+					     </td>
+<td>Available</td></tr>
+<tr class="odd">
+<td>
+							<input type="checkbox" name="CB_31350730" onclick="return toggleBoxes(this)" style="">
+						</td>
+<td>
+					    	<a href="view_order.do?order_id=31350730&amp;orderNo=672346002">
+					    		672346002
+					    	</a>
+					     </td>
+<td>Available</td></tr>
+<tr class="even">
+<td>
+							<input type="checkbox" name="CB_31350729" onclick="return toggleBoxes(this)" style="">
+						</td>
+<td>
+					    	<a href="view_order.do?order_id=31350729&amp;orderNo=672346001">
+					    		672346001
+					    	</a>
+					     </td>
+<td>Available</td></tr></tbody></table> 
+					</td>
+				</tr>
+				<tr>
+					<td>
+							<div class="exportlinks">
+								Export Purchase Order List To 
+								<a href="ShipmentPurchaseOrderPDFServlet.do" target="output">
+									<img src="/vms-gateway/images/ico_file_pdf.png"> PDF
+								</a>
+							</div>
+						<div align="right">
+							<input name="submit" type="submit" value="Add Selected" onclick="return addConfirm('add')" style=""> 
+							<input name="cancel" type="button" value="Cancel" onclick="return cancelConfirm('cancel')" style="">
+						</div>
+					</td>
+				</tr>
+				</tbody>
+				</table>
+				</td>
+				</tr>
+				</tbody></table>
+				</td>
+				</tr>
+		</tbody>
+	</table>
+	</form>
+<div class="footer">
+	<div class="copyright">
+	    Copyright © 1997-2026
+	    Burlington Stores - All rights reserved
+	</div>
+</div>
+</div>
+</body></html>

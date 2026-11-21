@@ -23,11 +23,11 @@ keys:
     candidates: [{kind: xpath, xpath: "//table[.//th[contains(normalize-space(),'Document ID')] or .//td[contains(normalize-space(),'Document ID')]]", nth: -1},
                  {kind: css, css: "table:has(tr.odd), table:has(tr.even)"}]}
   inbox.result_row:                {page: inbox, verified: true, description: "Inbox result row whose Document ID link equals {po} (any row, including stricken)",
-    candidates: [{kind: xpath, xpath: "//tr[contains(@class,'odd') or contains(@class,'even')][.//a[contains(@href,'view_order.do')][normalize-space()='{po}']]"},
-                 {kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}']]"}]}
+    candidates: [{kind: xpath, xpath: "//tr[contains(@class,'odd') or contains(@class,'even')][.//a[contains(@href,'view_order.do')][normalize-space()='{po}']][not(.//tr[contains(@class,'odd') or contains(@class,'even')][.//a[contains(@href,'view_order.do')][normalize-space()='{po}']])]"},
+                 {kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}']][not(.//tr[.//a[normalize-space()='{po}']])]"}]}
   inbox.result_row_active:         {page: inbox, verified: true, description: "Inbox result row for {po} that is NOT replaced (no 'stricken' class, status != REPLACED)",
-    candidates: [{kind: xpath, xpath: "//tr[(contains(@class,'odd') or contains(@class,'even')) and not(contains(@class,'stricken'))][.//a[contains(@href,'view_order.do')][normalize-space()='{po}']][not(.//td[normalize-space()='REPLACED'])]"},
-                 {kind: xpath, xpath: "//tr[not(contains(@class,'stricken'))][.//a[normalize-space()='{po}']][not(contains(.,'REPLACED'))]"}]}
+    candidates: [{kind: xpath, xpath: "//tr[(contains(@class,'odd') or contains(@class,'even')) and not(contains(@class,'stricken'))][.//a[contains(@href,'view_order.do')][normalize-space()='{po}']][not(.//td[normalize-space()='REPLACED'])][not(.//tr[(contains(@class,'odd') or contains(@class,'even')) and not(contains(@class,'stricken'))][.//a[contains(@href,'view_order.do')][normalize-space()='{po}']][not(.//td[normalize-space()='REPLACED'])])]"},
+                 {kind: xpath, xpath: "//tr[not(contains(@class,'stricken'))][.//a[normalize-space()='{po}']][not(contains(.,'REPLACED'))][not(.//tr[not(contains(@class,'stricken'))][.//a[normalize-space()='{po}']][not(contains(.,'REPLACED'))])]"}]}
   inbox.result_link:               {page: inbox, verified: true, description: "Document ID link inside a result row",
     candidates: [{kind: css, css: "a[href*='view_order.do']"}, {kind: role, role: link, name: "{po}", exact: true}]}
   inbox.row_status_cell:           {page: inbox, verified: true, description: "Status cell (6th td) inside a result row",
@@ -96,37 +96,39 @@ keys:
 
   # ---------- selected purchase orders selected_pos.do (V except search tab) ----------
   pos.form:                        {page: pos, verified: true, description: "Selected POs form", candidates: [{kind: css, css: "form[name='form1']"}]}
-  pos.tab_selected:                {page: pos, verified: true, description: "Tab 'Selected Purchase Orders'",
-    candidates: [{kind: role, role: link, name: "Selected Purchase Orders"}, {kind: text, text: "Selected Purchase Orders", exact: true},
+  pos.tab_selected:                {page: pos, verified: true, description: "Tab 'Selected Purchase Orders' (real site: <a href=selected_pos.do><img selectedpo_*_tab.gif>)",
+    candidates: [{kind: css, css: "a[href='selected_pos.do'], a:has(img[src*='selectedpo' i])"}, {kind: role, role: link, name: "Selected Purchase Orders"}, {kind: text, text: "Selected Purchase Orders", exact: true},
                  {kind: css, css: "input[type='button'][value='Selected Purchase Orders'], input[type='submit'][value='Selected Purchase Orders'], button:text-is('Selected Purchase Orders')"}, {kind: role, role: button, name: "Selected Purchase Orders", exact: true},
                  {kind: xpath, xpath: "//*[normalize-space(@value)='Selected Purchase Orders' or normalize-space(@alt)='Selected Purchase Orders' or normalize-space(@title)='Selected Purchase Orders' or (not(self::script) and normalize-space(text())='Selected Purchase Orders')]"}]}
-  pos.tab_search:                  {page: pos, verified: false, description: "Tab 'Search Purchase Orders'",
-    candidates: [{kind: role, role: link, name: "Search Purchase Orders"}, {kind: text, text: "Search Purchase Orders", exact: true},
+  pos.tab_search:                  {page: pos, verified: true, description: "Tab 'Search Purchase Orders' (real site: <a href=search_po.do><img searchpo_*_tab.gif>)",
+    candidates: [{kind: css, css: "a[href='search_po.do'], a:has(img[src*='searchpo' i])"}, {kind: role, role: link, name: "Search Purchase Orders"}, {kind: text, text: "Search Purchase Orders", exact: true},
                  {kind: css, css: "a[href*='search_pos'], a[href*='searchPurchase'], a[href*='tab=search'], a[href*='search_po' i], a:has(img[src*='search_p' i]), a:has(img[src*='searchp' i]), [onclick*='search_po' i], [onclick*='searchPO' i]"},
                  {kind: css, css: "input[type='button'][value='Search Purchase Orders'], input[type='submit'][value='Search Purchase Orders'], button:text-is('Search Purchase Orders')"}, {kind: role, role: button, name: "Search Purchase Orders", exact: true},
                  {kind: xpath, xpath: "//*[normalize-space(@value)='Search Purchase Orders' or normalize-space(@alt)='Search Purchase Orders' or normalize-space(@title)='Search Purchase Orders' or (not(self::script) and normalize-space(text())='Search Purchase Orders')]"}]}
-  pos.search_po_input:             {page: pos, verified: false, description: "'Purchase Order No' filter box on Search tab",
-    candidates: [{kind: label, text: "Purchase Order No"}, {kind: css, css: "input[name*='purchaseOrderNo' i], input[name*='poNo' i], input[name*='orderNo' i]"},
-                 {kind: xpath, xpath: "//td[contains(normalize-space(),'Purchase Order No')]/following::input[@type='text'][1]"}]}
-  pos.search_button:               {page: pos, verified: false, description: "Search button on Search tab",
+  pos.search_po_input:             {page: pos, verified: true, description: "'Purchase Order No' filter box on Search tab (real: input#PO_NO, no type attr)",
+    candidates: [{kind: css, css: "#PO_NO, input[name='PO_NO']"}, {kind: label, text: "Purchase Order No"}, {kind: css, css: "input[name*='purchaseOrderNo' i], input[name*='poNo' i], input[name*='orderNo' i]"},
+                 {kind: xpath, xpath: "//td[contains(normalize-space(),'Purchase Order No')]/following::input[not(@type) or @type='text'][1]"}]}
+  pos.search_button:               {page: pos, verified: true, description: "Search button on Search tab",
     candidates: [{kind: css, css: "input[type='submit'][value='Search'], input[type='button'][value='Search']"}, {kind: role, role: button, name: "Search", exact: true}]}
-  pos.search_row:                  {page: pos, verified: false, description: "Search result row containing PO {po}",
-    candidates: [{kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//input[@type='checkbox']]"}]}
+  pos.search_row:                  {page: pos, verified: true, description: "Search result row containing PO {po}",
+    candidates: [{kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//input[@type='checkbox']][not(.//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//input[@type='checkbox']])]"}]}
   pos.search_row_checkbox:         {page: pos, verified: false, description: "Checkbox inside a search result row", candidates: [{kind: css, css: "input[type='checkbox']"}]}
-  pos.add_selected_button:         {page: pos, verified: false, description: "'Add Selected' button on Search tab",
+  pos.add_selected_button:         {page: pos, verified: true, description: "'Add Selected' button on Search tab",
     candidates: [{kind: css, css: "input[value='Add Selected']"}, {kind: role, role: button, name: "Add Selected", exact: true}]}
   pos.selected_row:                {page: pos, verified: true, description: "Row of the Selected tab for PO {po} (contains complete_shipment_N select)",
-    candidates: [{kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}']][.//select[starts-with(@name,'complete_shipment_')]]"},
-                 {kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//select]"}]}
+    candidates: [{kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}']][.//select[starts-with(@name,'complete_shipment_')]][not(.//tr[.//a[normalize-space()='{po}']][.//select[starts-with(@name,'complete_shipment_')]])]"},
+                 {kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//select][not(.//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//select])]"}]}
   pos.row_status_text:             {page: pos, verified: true, description: "Status text cell in a selected row (Available/Replaced)", candidates: [{kind: css, css: "td:nth-child(3)"}]}
   pos.row_complete_partial_select: {page: pos, verified: true, description: "Complete/Partial select of row {row_key}",
     candidates: [{kind: css, css: "select[name='complete_shipment_{row_key}']"}, {kind: css, css: "select[name^='complete_shipment_']", within: pos.selected_row}]}
   pos.row_packaging_select:        {page: pos, verified: true, description: "Packaging Code select of row {row_key} (CTN25 default)",
     candidates: [{kind: css, css: "select[name='pack_code_{row_key}']"}, {kind: css, css: "select[name^='pack_code_']", within: pos.selected_row}]}
   pos.row_save_button:             {page: pos, verified: true, description: "Row 'Save' button (saveCarton)",
-    candidates: [{kind: css, css: "input[onclick*=\"saveCarton('saveCarton', {row_key}\"]"}, {kind: css, css: "input[value='Save']", within: pos.selected_row}]}
+    candidates: [{kind: css, css: "input[onclick*=\"saveCarton('saveCarton','{row_key}'\"]"}, {kind: css, css: "input[onclick*=\"saveCarton('saveCarton', {row_key}\"]"},
+                 {kind: css, css: "input[onclick*='saveCarton']", within: pos.selected_row}]}
   pos.row_create_carton_button:    {page: pos, verified: true, description: "Row 'Create Carton' button (insertCarton)",
-    candidates: [{kind: css, css: "input[onclick*=\"insertCarton('insertCarton', {row_key}\"]"}, {kind: css, css: "input[value='Create Carton']", within: pos.selected_row}]}
+    candidates: [{kind: css, css: "input[onclick*=\"insertCarton('insertCarton','{row_key}'\"]"}, {kind: css, css: "input[onclick*=\"insertCarton('insertCarton', {row_key}\"]"},
+                 {kind: css, css: "input[value='Create Carton']", within: pos.selected_row}]}
   pos.view_detail_button:          {page: pos, verified: true, description: "'View Shipment Orders Detail' button",
     candidates: [{kind: css, css: "input[name='poSiteShipment']"}, {kind: role, role: button, name: "View Shipment Orders Detail"}]}
   pos.back_to_header_button:       {page: pos, verified: true, description: "'<< Back To Shipment Header'",
@@ -142,43 +144,43 @@ keys:
   carton.carton_name_input:        {page: carton, verified: false, description: "Carton Name text box",
     candidates: [{kind: label, text: "Carton Name"}, {kind: css, css: "input[name*='carton_definition_name' i], input[name*='cartonName' i]"}]}
   carton.packaging_code_select:    {page: carton, verified: false, description: "Packaging Code select next to Carton Name ('Physical Container - Carton')",
-    candidates: [{kind: xpath, xpath: "//*[normalize-space()='Packaging Code']/following::select[1]"}, {kind: label, text: "Packaging Code"},
+    candidates: [{kind: css, css: "select[name='packagingCodeSelect']"}, {kind: xpath, xpath: "//*[normalize-space()='Packaging Code']/following::select[1]"}, {kind: label, text: "Packaging Code"},
                  {kind: css, css: "select[name*='packaging_code' i], select[name*='pack_code' i]"}]}
   carton.tab_items_search:         {page: carton, verified: false, description: "Tab 'Search Items'",
-    candidates: [{kind: role, role: link, name: "Search Items"}, {kind: text, text: "Search Items", exact: true}]}
+    candidates: [{kind: css, css: "a[href='search_items.do'], a:has(img[src*='searchitems' i])"}, {kind: role, role: link, name: "Search Items"}, {kind: text, text: "Search Items", exact: true}]}
   carton.tab_items_selected:       {page: carton, verified: false, description: "Tab 'Selected Items'",
     candidates: [{kind: role, role: link, name: "Selected Items"}, {kind: text, text: "Selected Items", exact: true}]}
   carton.items_section:            {page: carton, verified: false, description: "Container of the items table (contains header 'Sku/Upc/Prepack' or 'SKU No')",
     candidates: [{kind: xpath, xpath: "//table[.//th[contains(.,'Sku') or contains(.,'SKU')] or .//td[contains(.,'Sku/Upc/Prepack') or contains(.,'SKU No')]][last()]"}]}
   carton.items_search_row:         {page: carton, verified: false, description: "Search Items result row with a checkbox (PO group row '{item_label}' or first row)",
-    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='checkbox']][contains(.,'{item_label}')]"}, {kind: xpath, xpath: "//tr[.//input[@type='checkbox']][.//td[contains(.,'PO{master_po}')]]"},
-                 {kind: xpath, xpath: "(//table[.//th[contains(.,'SKU')] or .//td[contains(.,'SKU No')]]//tr[.//input[@type='checkbox']])[1]"}]}
+    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='checkbox']][contains(.,'{item_label}')][not(.//tr[.//input[@type='checkbox']][contains(.,'{item_label}')])]"}, {kind: xpath, xpath: "//tr[.//input[@type='checkbox']][.//td[contains(.,'PO{master_po}')]][not(.//tr[.//input[@type='checkbox']][.//td[contains(.,'PO{master_po}')]])]"},
+                 {kind: xpath, xpath: "(//table[.//th[contains(.,'SKU')] or .//td[contains(.,'SKU No')]]//tr[.//input[@type='checkbox']][not(.//tr[.//input[@type='checkbox']])])[1]"}]}
   carton.items_add_selected:       {page: carton, verified: false, description: "'Add Selected' button under Search Items table",
     candidates: [{kind: xpath, xpath: "(//table[.//*[contains(.,'SKU')]]/following::input[@value='Add Selected'])[1]"}, {kind: css, css: "input[value='Add Selected']", nth: 0}]}
-  carton.item_po_row:              {page: carton, verified: false, description: "Selected Items row for '{item_label}' (has Qty Per Carton input)",
-    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='text']][contains(.,'{item_label}')]"}, {kind: xpath, xpath: "//tr[.//input[@type='text']][contains(.,'PO{master_po}')]"}]}
+  carton.item_po_row:              {page: carton, verified: true, description: "Selected Items row for '{item_label}' (has Qty Per Carton input)",
+    candidates: [{kind: xpath, xpath: "//tr[.//input[starts-with(@name,'editedItemQty')]][.//a[normalize-space()='{item_label}']][not(.//tr[.//input[starts-with(@name,'editedItemQty')]])]"}, {kind: xpath, xpath: "//tr[.//input[@type='text']][contains(.,'{item_label}')][not(.//tr[.//input[@type='text']][contains(.,'{item_label}')])]"}, {kind: xpath, xpath: "//tr[.//input[@type='text']][contains(.,'PO{master_po}')][not(.//tr[.//input[@type='text']][contains(.,'PO{master_po}')])]"}]}
   carton.item_qty_per_carton_input: {page: carton, verified: false, description: "Qty Per Carton input inside item row",
-    candidates: [{kind: css, css: "input[type='text']", within: carton.item_po_row}]}
+    candidates: [{kind: css, css: "input[name^='editedItemQty']", within: carton.item_po_row}, {kind: css, css: "input[type='text']", within: carton.item_po_row}]}
   carton.item_qty_ordered_cell:    {page: carton, verified: false, description: "Qty Ordered cell inside item row (td immediately before the input's td)",
     candidates: [{kind: xpath, xpath: ".//td[.//input[@type='text']]/preceding-sibling::td[1]", within: carton.item_po_row}]}
   carton.item_um_cell:             {page: carton, verified: false, description: "Unit of Measure cell inside item row (AS/EA, last td)",
     candidates: [{kind: xpath, xpath: ".//td[last()]", within: carton.item_po_row}]}
   carton.item_prepack_row:         {page: carton, verified: false, description: "Prepack sub-row directly after the item row (no checkbox, no input, UM EA)",
-    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='text']][contains(.,'{item_label}')]/following-sibling::tr[1][not(.//input)][contains(.,'EA')]"}]}
+    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='text']][contains(.,'{item_label}')][not(.//tr[.//input[@type='text']][contains(.,'{item_label}')])]/following-sibling::tr[1][not(.//input)][contains(.,'EA')]"}]}
   carton.tab_sites_search:         {page: carton, verified: false, description: "Tab 'Search Sites'",
-    candidates: [{kind: role, role: link, name: "Search Sites"}, {kind: text, text: "Search Sites", exact: true}]}
+    candidates: [{kind: css, css: "a[href='search_sites.do'], a:has(img[src*='searchsite' i])"}, {kind: role, role: link, name: "Search Sites"}]}
   carton.sites_search_row:         {page: carton, verified: false, description: "Search Sites result row with checkbox (site {site_no} or first)",
-    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='checkbox']][.//td[normalize-space()='{site_no}']]"},
-                 {kind: xpath, xpath: "(//table[.//*[contains(.,'Zip Code')]]//tr[.//input[@type='checkbox']])[1]"}]}
+    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='checkbox']][.//td[normalize-space()='{site_no}']][not(.//tr[.//input[@type='checkbox']][.//td[normalize-space()='{site_no}']])]"},
+                 {kind: xpath, xpath: "(//table[.//*[contains(.,'Zip Code')]]//tr[.//input[@type='checkbox']][not(.//tr[.//input[@type='checkbox']])])[1]"}]}
   carton.sites_add_selected:       {page: carton, verified: false, description: "'Add Selected' button under Search Sites table",
     candidates: [{kind: xpath, xpath: "(//table[.//*[contains(.,'Zip Code')]]/following::input[@value='Add Selected'])[1]"}, {kind: css, css: "input[value='Add Selected']", nth: -1}]}
   carton.site_row:                 {page: carton, verified: false, description: "Selected Sites row (has Cartons Per Site input)",
-    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='text']][.//a[normalize-space()='{site_no}'] or .//td[normalize-space()='{site_no}']]"},
-                 {kind: xpath, xpath: "(//table[.//*[contains(.,'Cartons')]]//tr[.//input[@type='text']])[1]"}]}
+    candidates: [{kind: xpath, xpath: "//tr[.//input[@type='text']][.//a[normalize-space()='{site_no}'] or .//td[normalize-space()='{site_no}']][not(.//tr[.//input[@type='text']][.//a[normalize-space()='{site_no}'] or .//td[normalize-space()='{site_no}']])]"},
+                 {kind: xpath, xpath: "(//table[.//*[contains(.,'Cartons')]]//tr[.//input[@type='text']][not(.//tr[.//input[@type='text']])])[1]"}]}
   carton.site_cartons_per_site_input: {page: carton, verified: false, description: "Cartons Per Site input inside site row",
-    candidates: [{kind: css, css: "input[type='text']", within: carton.site_row}]}
+    candidates: [{kind: css, css: "input[name^='editedSiteQty']", within: carton.site_row}, {kind: css, css: "input[type='text']", within: carton.site_row}]}
   carton.save_button:              {page: carton, verified: false, description: "Bottom 'Save' button of carton page",
-    candidates: [{kind: xpath, xpath: "(//input[@type='button' or @type='submit'][@value='Save'])[last()]"}, {kind: role, role: button, name: "Save", exact: true, nth: -1}]}
+    candidates: [{kind: css, css: "input[name='SaveCarton2']"}, {kind: xpath, xpath: "(//input[@type='button' or @type='submit'][normalize-space(@value)='Save'])[last()]"}, {kind: role, role: button, name: "Save", exact: true, nth: -1}]}
   carton.back_to_po_button:        {page: carton, verified: false, description: "'<< Back to Purchase Order'",
     candidates: [{kind: css, css: "input[value*='Back to Purchase Order']"}, {kind: role, role: button, name: "<< Back to Purchase Order"}]}
 
@@ -187,7 +189,7 @@ keys:
   weight.orderperpage_select:      {page: weight, verified: true, description: "Orders per page select (set to All = 100000)",
     candidates: [{kind: css, css: "form[name='po_site_shipment'] select[name='orderperpage']"}, {kind: css, css: "select[name='orderperpage']"}]}
   weight.row:                      {page: weight, verified: true, description: "Row for PO {po} containing weight input",
-    candidates: [{kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//input[starts-with(@name,'editedSiteWgtqu')]]"}]}
+    candidates: [{kind: xpath, xpath: "//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//input[starts-with(@name,'editedSiteWgtqu')]][not(.//tr[.//a[normalize-space()='{po}'] or .//td[normalize-space()='{po}']][.//input[starts-with(@name,'editedSiteWgtqu')]])]"}]}
   weight.row_weight_input:         {page: weight, verified: true, description: "WEIGHT input for row {row_key}",
     candidates: [{kind: css, css: "input[name='editedSiteWgtqu{row_key}']"}, {kind: css, css: "input[name^='editedSiteWgtqu']", within: weight.row}]}
   weight.row_um_select:            {page: weight, verified: true, description: "WEIGHT UM select for row {row_key}",

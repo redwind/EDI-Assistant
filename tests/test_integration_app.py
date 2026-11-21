@@ -54,7 +54,8 @@ def stack(qtbot, tmp_path, mock_server, monkeypatch):
     cfg = AppConfig()
     cfg.site.use_mock, cfg.site.mock_url = True, mock_server.url
     cfg.pace.enabled = False   # keep the suite fast; pacing has its own tests
-    cfg.browser.channel, cfg.browser.headless, cfg.browser.default_timeout_ms = "chromium", True, 8000
+    cfg.browser.channel, cfg.browser.headless, cfg.browser.default_timeout_ms = (
+        os.environ.get("EDI_TEST_BROWSER_CHANNEL", "chromium"), True, 8000)
 
     FactoryStore().upsert(FactoryAddress(id="", name="SUMEC TEXTILE COMPANY LIMITED", address1="1 TEST ROAD",
                                          address2="BLDG 2", city="NANJING", state="JIANGSU", zip="210000",

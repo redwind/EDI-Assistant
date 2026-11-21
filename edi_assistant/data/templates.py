@@ -16,6 +16,16 @@ from .header_detect import HeaderDetection
 from .mapping import ColumnMapping, ColumnRef
 
 
+TEMPLATE_VERSION = 2
+
+
+def is_current(d: dict) -> bool:
+    """A remembered layout is only reused when it was saved with today's field list. Layouts saved by older
+    versions (other tracker formats, before Factory Name / Delivery Address existed) are dropped, so the
+    columns are suggested afresh from the file's headers."""
+    return int(d.get("version", 1)) >= TEMPLATE_VERSION and set(d.get("fields") or ()) == set(FIELD_KEYS)
+
+
 def _now() -> str:
     return datetime.now().isoformat(timespec="seconds")
 
@@ -43,7 +53,8 @@ class Template:
 
     def to_dict(self) -> dict:
         return {
-            "version": 1,
+            "version": TEMPLATE_VERSION,
+            "fields": list(FIELD_KEYS),
             "fingerprint": self.fingerprint,
             "name": self.name,
             "created_at": self.created_at,
@@ -91,23 +102,28 @@ class TemplateStore:
         d.mkdir(parents=True, exist_ok=True)
         return d
 
+    def _load(self, p: Path) -> Template | None:
+        """Template in `p`; None when corrupt. An outdated layout (see is_current) is deleted and ignored."""
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        if not isinstance(d, dict):
+            return None
+        if not is_current(d):
+            p.unlink(missing_ok=True)
+            return None
+        try:
+            return Template.from_dict(d)
+        except (KeyError, TypeError, ValueError):
+            return None
+
     def list(self) -> list[Template]:
-        out = []
-        for p in sorted(self.directory.glob("*.json")):
-            try:
-                out.append(Template.from_dict(json.loads(p.read_text(encoding="utf-8"))))
-            except (OSError, ValueError, KeyError):
-                continue   # skip corrupt files
-        return out
+        return [t for p in sorted(self.directory.glob("*.json")) if (t := self._load(p)) is not None]
 
     def get(self, fingerprint: str) -> Template | None:
         p = self.directory / f"{fingerprint}.json"
-        if not p.exists():
-            return None
-        try:
-            return Template.from_dict(json.loads(p.read_text(encoding="utf-8")))
-        except (OSError, ValueError, KeyError):
-            return None
+        return self._load(p) if p.exists() else None
 
     def save(self, t: Template) -> None:
         t.updated_at = _now()

@@ -76,3 +76,24 @@ def test_config_roundtrip_keeps_table():
     assert cfg.flow.to_sites == {"CA": "512", "NJ": "053", "GA": "934"}
     cfg.flow.to_sites = {"TX": "100"}
     assert config_from_dict(config_to_dict(cfg)).flow.to_sites == {"TX": "100"}
+
+
+
+def test_layout_from_older_version_is_dropped(tmp_path):
+    """A layout remembered by an older version (no Delivery Address) is deleted, so the new format is
+    mapped afresh from its headers."""
+    import json
+    from edi_assistant.data.templates import TemplateStore
+    _tracker(tmp_path, [GA])
+    det = detect_header(load_grid(tmp_path / "t.xlsx", "Vendor "))
+    m, _ = suggest_mapping(det)
+    store = TemplateStore(tmp_path / "tpl")
+    t = store.learn(det, m, "new", "", "Vendor ")
+    assert store.find(det).template.columns["delivery_address"].letter == "B"
+    f = store.directory / f"{t.fingerprint}.json"
+    d = json.loads(f.read_text(encoding="utf-8"))
+    d["version"] = 1
+    d.pop("fields")
+    d["columns"].pop("delivery_address")
+    f.write_text(json.dumps(d), encoding="utf-8")
+    assert store.find(det) is None and not f.exists() and store.list() == []

@@ -92,6 +92,8 @@ class FlowRunner:
                         self._handle_block(be, step)
                     attempt += 1
                     continue
+                ctx.log.warning("step %s failed (attempt %d): %s: %s", step.id, attempt + 1, type(e).__name__,
+                                getattr(e, "message_vi", "") or (str(e).splitlines() or [""])[0])
                 snap = capture(ctx.session, ctx.run_dir, step.id)
                 if isinstance(e, ElementNotFoundError) and attempt == 0:
                     key = e.ctx.get("key", "")

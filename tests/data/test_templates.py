@@ -16,7 +16,7 @@ def test_learn_find_similar(sample_path, tmp_path):
     assert store.learn(det, mapping, "", "", "page 1").use_count == 2
 
     data = json.loads((tmp_path / "tpl" / f"{t.fingerprint}.json").read_text(encoding="utf-8"))
-    assert set(data) == {"version", "fingerprint", "name", "created_at", "updated_at", "sheet_name",
+    assert set(data) == {"version", "fields", "fingerprint", "name", "created_at", "updated_at", "sheet_name",
                          "header_rows", "header_tokens", "columns", "factory_id", "use_count", "profile"}
     assert data["columns"]["po"] == {"letter": "A", "header": "PO"}
     assert data["columns"]["line"] is None

@@ -19,7 +19,7 @@ REQUIRED_BY_PROFILE: dict[str, tuple[str, ...]] = {
 }
 OPTIONAL_BY_PROFILE: dict[str, tuple[str, ...]] = {
     "packing_list": ("line", "description", "net_weight", "size"),
-    "po_tracker": ("asn", "model_no", "description", "container", "edi_units", "factory", "delivery_address"),
+    "po_tracker": ("factory", "delivery_address", "edi_units", "asn", "model_no", "description", "container"),
 }
 
 
