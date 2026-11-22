@@ -3,7 +3,7 @@
   #error Inno Setup 6.3 or newer is required (ArchitecturesInstallIn64BitMode=x64compatible)
 #endif
 #ifndef MyAppVersion
-  #define MyAppVersion "0.1.5"
+  #define MyAppVersion "0.1.6"
 #endif
 
 [Setup]
