@@ -230,3 +230,42 @@ def test_dry_run_skipped_header_step_never_persists(mock_server, make_session, s
     assert "S7.add_purchase_orders" not in started and started[-1] == "S6.fill_header_save"
     assert mock_server.state.shipments == {} and not any("save_header" in l for l in mock_server.state.log)
     assert mock_server.state.submit_called is False
+
+
+def test_saved_login_logs_in_by_itself(mock_server_login, make_session, selectors_store):
+    """With a login saved in the OS credential store the tool logs in on the EDI login page itself: no pause."""
+    from edi_assistant.core import credentials
+    credentials.save("u", "secret")
+    plan = make_plan([make_line("580367401")])
+    hx = Harness(mock_server_login, make_session, selectors_store, plan)
+    result = hx.run()
+    assert hx.unexpected == [] and result.status == "done", result.error
+    assert not [e for e in hx.asked if e.kind == "login_required"]
+    assert mock_server_login.state.profile_selected and mock_server_login.state.submit_called is False
+
+
+def test_auto_login_on_the_real_malformed_login_page(session, memory_keyring):
+    """The real login page leaves its inputs outside <form> in the DOM; the fields are found by form owner."""
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    from edi_assistant.automation import autologin
+    from edi_assistant.core import credentials
+    credentials.save("u@example.com", "secret")
+    from realdata import real_file
+    html = real_file("login_real.html").read_text(encoding="utf-8")
+    posted = []
+    page = session.page
+
+    def serve(route):
+        if route.request.method == "POST":
+            posted.append(route.request.post_data)
+            route.fulfill(status=200, content_type="text/html", body="<title>Select Profile</title><p>ok</p>")
+        else:
+            route.fulfill(status=200, content_type="text/html", body=html)
+    page.route("https://edi.test/**", serve)
+    page.goto("https://edi.test/vms-gateway/login.do")
+    s = SimpleNamespace(page=page, site=SimpleNamespace(effective_base_url=lambda: "https://edi.test/vms-gateway/"),
+                        title=page.title, is_login_page=session.is_login_page, auto_login_failed=False)
+    assert autologin.try_auto_login(s) == autologin.DONE
+    assert posted and "Password=secret" in posted[0] and "User_ID=u%40example.com" in posted[0]

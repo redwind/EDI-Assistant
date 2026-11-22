@@ -12,3 +12,5 @@ dist/
 *_ASN_*.xlsx
 ~$*.xlsx
 packaging/version_info.txt.bak
+# captures of the real EDI site (business data): kept on the developer machine only, never pushed
+tests/automation/fixtures/real/

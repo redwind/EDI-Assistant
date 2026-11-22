@@ -5,16 +5,15 @@ first checkbox of the whole table (another PO) was ticked."""
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from edi_assistant.automation.selectors import SelectorResolver
 
-HTML = (Path(__file__).parent / "fixtures" / "search_po_real.html").read_text(encoding="utf-8")
+from realdata import real_file
 
 
 def test_search_page_selectors(session, selectors_store):
     page = session.page
-    page.set_content(HTML)
+    page.set_content(real_file("search_po_real.html").read_text(encoding="utf-8"))
     r = SelectorResolver(selectors_store, logging.getLogger("t"))
     v = {"po": "672346001"}
     for key in ("pos.tab_selected", "pos.tab_search", "pos.search_po_input", "pos.search_button",

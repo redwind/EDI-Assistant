@@ -22,6 +22,8 @@ LOAD_CAP_MS = 5000
 IDLE_CAP_MS = 2000
 
 
+MIN_PAGE_TIMEOUT_MS = 45000   # measured: the EDI server can take 20 s+ for one page
+
 class BrowserSession:
     def __init__(self, cfg: BrowserConfig, site: SiteConfig, profile_dir: Path, sink: EventSink, log: logging.Logger):
         self.cfg = cfg
@@ -36,6 +38,7 @@ class BrowserSession:
         self.block_reason = ""            # set by the response listener on 403/429/503 main-frame responses
         self._pw: Playwright | None = None
         self.context: BrowserContext | None = None
+        self.auto_login_failed = False   # one automatic login attempt per browser session
         self._pages: list[Page] = []
 
     # ------------------------------------------------------------------ lifecycle
@@ -67,7 +70,7 @@ class BrowserSession:
                 msg = 'Edge/Chrome/Chromium not found or could not start. Use Tools > Install Chromium browser, or Help > System check.'
             raise BrowserLaunchError(errors[-1][1] if errors else "no launch attempt", message_vi=msg)
         ctx = self.context
-        ctx.set_default_timeout(self.cfg.default_timeout_ms)
+        ctx.set_default_timeout(max(self.cfg.default_timeout_ms, MIN_PAGE_TIMEOUT_MS))
         ctx.route(BLOCK_PATTERN, self._block)
         ctx.on("page", self._on_new_page)
         for p in list(ctx.pages):

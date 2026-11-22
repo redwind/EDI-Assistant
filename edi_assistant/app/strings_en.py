@@ -184,6 +184,8 @@ SET_COMPLETE_PARTIAL = "Complete / Partial"
 SET_WEIGHT_UM = "Weight unit"
 SET_CLICK_VALIDATE = "Click 'Validate Shipment' after entry (not recommended)"
 SET_CLICK_VALIDATE_HELP = "The tool never clicks Submit ASN, even with this option on."
+SET_DIRECT_HTTP = "Fast mode: send the EDI forms directly"
+SET_DIRECT_HTTP_HELP = "Header, POs, cartons, Partial and weights are sent as the browser's own form posts (same login), without clicking through every page. If anything looks unexpected the run continues in the browser from that page. Uses the ship dates from the tracker."
 SET_WRITE_BACK = "Write ASN into a copy of the Excel file"
 SET_PAUSE_QTY = "Pause when the Excel quantity differs from the ordered quantity"
 SET_PAST_DATE = "When the ship date is in the past"
@@ -321,3 +323,16 @@ INSTANCE_OTHER_VERSION = ("EDI Assistant {running} is already running (system tr
                           "Close version {running} and open {version}?")
 INSTANCE_QUIT_TIMEOUT = ("EDI Assistant {running} did not close. Exit it from the tray icon (right-click > Exit), "
                          "then open this version again.")
+
+# --- EDI login (credential store)
+TAB_LOGIN = 'EDI login'
+LOGIN_USER = 'User ID (e-mail)'
+LOGIN_PWD = 'Password'
+LOGIN_SAVE = 'Save login'
+LOGIN_CLEAR = 'Remove saved login'
+LOGIN_PWD_SAVED = '(saved - type a new one to replace it)'
+LOGIN_HELP = "Saved in the computer's password store (Windows Credential Manager / macOS Keychain) for your user account only - never in the settings file or logs. The tool then logs in by itself, only on the EDI login page, one try; a wrong password, captcha or extra verification is left to you."
+LOGIN_STATUS_SAVED = 'Login saved for {user} ({store}). The tool logs in by itself.'
+LOGIN_STATUS_NONE = 'No login saved: you log in yourself when the EDI site asks.'
+LOGIN_NO_STORE = 'No password store is available on this computer: automatic login is off.'
+LOGIN_NEED_BOTH = 'Enter both the User ID and the password.'

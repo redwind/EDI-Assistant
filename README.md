@@ -61,12 +61,14 @@ Running the app a second time while it is open just brings the running window to
 
 ## 3. First use
 
-1. Click **Open browser**. An Edge window appears (the tool's own profile).
-2. **Log in yourself** to EDI Gateway in that window (enter your password, select the vendor profile). The login session is kept for later runs; when it expires the tool pauses and waits for you to log in again.
+1. **Save your EDI login once:** Settings → **EDI login** → User ID + password → **Save login** (kept in Windows Credential Manager / macOS Keychain). Without a saved login the tool pauses at the login page and you log in yourself.
+2. There is no separate "Open browser" step: **Start entry** opens the browser (the tool's own profile), logs in and goes to EDI Gateway by itself. (The tray menu still has *Open browser* to look at the site by hand.)
 3. Add factories: click **Add/Edit...** in the "Factory" group. Enter the name, address, city, country... (you can set "Other names" for automatic recognition). The app suggests a factory from the company name at the top/bottom of the Excel file.
    - **Import the whole list from Excel (recommended):** click **Import Excel…** (or *File > Import factory list (Excel)…*) and pick `factories.xlsx` (first sheet, one row per factory; columns Factory Name, Address 1, Address 2, City, State, Zip, Country, Aliases (`;`-separated), Code, Transportation Method, SCAC Code). Import once; when the list changes, import the file again - factories with the same name are updated, new ones added, others kept.
    - Blank Transportation Method / SCAC Code = use Settings; fill them for factories that ship by truck (e.g. Mexico: LTL + the trucker's SCAC).
    - Trackers with a *Factory Name* column (e.g. `PO_EXTRACT_TRACKER_FORMAT`) pick the matching factory automatically; when *Order Units* is empty, the quantity comes from *EDI Units*.
+   - **Fast mode** (Settings → Workflow, on by default): header, POs, cartons, Partial and weights are sent as the browser's own form posts with the same login - a 10-PO shipment takes under a minute instead of several. Anything unexpected continues in the browser from that page. Validate Shipment / Submit ASN are never sent.
+   - **Saved login** (Settings → EDI login): stored in Windows Credential Manager / macOS Keychain, never in files or logs; the tool then logs in by itself on the EDI login page (one try).
    - **TO Site No** comes from the state at the end of *Delivery Address* (`..., ELLABELL, GA 31308` → GA → 934), following the EDI notice CA=512, NJ=053, GA=934. Change the table in Settings → *TO Site No by state*. If the address has no state, or lines of one shipment go to different DCs, the preview flags it and the run asks you to pick the site in the browser.
 
 Note: the portal's Country field only lists US, CA, CN directly. For other countries, the tool pauses and asks you to choose manually.

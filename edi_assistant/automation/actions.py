@@ -19,8 +19,8 @@ from .session import BrowserSession
 
 FORBIDDEN_NAME_IDS = {"btnSubmitASN", "cancelShipment", "btnCancel"}
 FORBIDDEN_TEXT_RE = re.compile(r"submit", re.I)
-NAV_TIMEOUT_MS = 6000
-SAVE_NAV_TIMEOUT_MS = 20000   # Save clicks: wait longer for the server response page (a rejected Save must be seen)
+NAV_TIMEOUT_MS = 30000   # the EDI server sometimes needs 10-20 s for a page
+SAVE_NAV_TIMEOUT_MS = 60000   # Save clicks: wait longer for the server response page (a rejected Save must be seen)
 TYPE_CHUNK = 8         # characters typed per press_sequentially call (abort is checked between chunks)
 SELECT_SETTLE_MS = 150  # let onchange handlers run before reading a select back
 

@@ -103,6 +103,7 @@ def test_web_dates_mismatch_is_flagged_not_blocking(mock_server_tracker, make_se
     o.early, o.late = "01-DEC-26", "05-DEC-26"
     plan = make_tracker_plan(mock_server_tracker)
     hx = TrackerHarness(mock_server_tracker, make_session, selectors_store, plan)
+    hx.ctx.config.flow.direct_http = False   # the web-date cross-check belongs to the browser steps (direct mode uses the tracker dates)
     result = hx.run()
     assert result.status == "done" and hx.unexpected == [], result.error
     sh = next(s for s in result.shipments if s.master_pos == ["5820682"])

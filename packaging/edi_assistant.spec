@@ -20,7 +20,9 @@ a = Analysis(  # noqa: F821
     binaries=[],
     datas=datas,
     hiddenimports=["edi_assistant.app.strings_en", "edi_assistant.app.strings_vi",   # loaded via importlib
-                   "edi_assistant.mock_edi", "edi_assistant.mock_edi.server", "pypdf", "winsound"],
+                   "edi_assistant.mock_edi", "edi_assistant.mock_edi.server", "pypdf", "winsound",
+                   "keyring", "keyring.backends", "keyring.backends.Windows", "keyring.backends.macOS",
+                   "win32ctypes", "win32ctypes.core", "win32ctypes.pywin32", "win32ctypes.pywin32.win32cred"],
     hookspath=[os.path.join(ROOT, "packaging", "hooks")],
     runtime_hooks=[],
     excludes=["PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.QtWebEngineQuick",

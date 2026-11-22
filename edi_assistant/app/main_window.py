@@ -166,13 +166,14 @@ class MainWindow(QMainWindow):
 
         # buttons
         h4 = QHBoxLayout()
-        self.btn_open_browser = QPushButton(S.BTN_OPEN_BROWSER)
-        self.btn_open_browser.clicked.connect(self.open_browser)
+        # Start entry opens the browser and logs in by itself (saved login), so there is no separate
+        # "Open browser" step here any more; the tray menu still has it for looking at the site by hand.
         self.btn_start = QPushButton(S.BTN_START)
+        self.btn_start.setDefault(True)
         self.btn_start.clicked.connect(self.start_run)
         self.btn_abort = QPushButton(S.BTN_ABORT)
         self.btn_abort.clicked.connect(self.abort_run)
-        for b in (self.btn_open_browser, self.btn_start, self.btn_abort):
+        for b in (self.btn_start, self.btn_abort):
             h4.addWidget(b)
         h4.addStretch(1)
         lay.addLayout(h4)

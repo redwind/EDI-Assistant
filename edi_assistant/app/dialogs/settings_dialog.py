@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 from edi_assistant.core.ai_interface import ExplainRequest
+from edi_assistant.core import credentials
 from edi_assistant.core.config import AI_PRESETS, AppConfig, config_from_dict, config_to_dict
 from edi_assistant.core.dc_sites import DEFAULT_TO_SITES, format_table, parse_table
 from edi_assistant.core.errors import EdiAssistantError
@@ -84,6 +85,28 @@ class SettingsDialog(QDialog):
         self.language.setToolTip(S.SET_LANGUAGE_HELP)
         tabs.addTab(_form_tab([(S.SET_BASE_URL, self.base_url), ("", self.use_mock), (S.SET_MOCK_URL, self.mock_url),
                                (S.SET_VENDOR, self.vendor), (S.SET_LANGUAGE, self.language)]), S.TAB_SITE)
+        # --- EDI login (saved straight into the OS credential store, never into the config)
+        self.login_user = QLineEdit(credentials.saved_user())
+        self.login_pwd = QLineEdit()
+        self.login_pwd.setEchoMode(QLineEdit.EchoMode.Password)
+        self.login_pwd.setPlaceholderText(S.LOGIN_PWD_SAVED if credentials.load() else "")
+        self.btn_login_save = QPushButton(S.LOGIN_SAVE)
+        self.btn_login_clear = QPushButton(S.LOGIN_CLEAR)
+        self.login_status = QLabel("")
+        self.login_status.setWordWrap(True)
+        self.btn_login_save.clicked.connect(self.save_login)
+        self.btn_login_clear.clicked.connect(self.clear_login)
+        btns = QWidget()
+        bl = QHBoxLayout(btns)
+        bl.setContentsMargins(0, 0, 0, 0)
+        bl.addWidget(self.btn_login_save)
+        bl.addWidget(self.btn_login_clear)
+        bl.addStretch(1)
+        help_lbl = QLabel(S.LOGIN_HELP)
+        help_lbl.setWordWrap(True)
+        tabs.addTab(_form_tab([("", help_lbl), (S.LOGIN_USER, self.login_user), (S.LOGIN_PWD, self.login_pwd),
+                               ("", btns), ("", self.login_status)]), S.TAB_LOGIN)
+        self._refresh_login_status()
         # --- browser
         self.channel = _combo([(S.SET_CHANNEL_AUTO, "auto"), ("Microsoft Edge", "msedge"), ("Google Chrome", "chrome"), ("Chromium", "chromium")],
                               c.browser.channel)
@@ -151,6 +174,9 @@ class SettingsDialog(QDialog):
         self.click_validate.setChecked(fl.click_validate)
         self.write_back = QCheckBox(S.SET_WRITE_BACK)
         self.write_back.setChecked(fl.write_back_excel)
+        self.direct_http = QCheckBox(S.SET_DIRECT_HTTP)
+        self.direct_http.setChecked(fl.direct_http)
+        self.direct_http.setToolTip(S.SET_DIRECT_HTTP_HELP)
         self.pause_qty = QCheckBox(S.SET_PAUSE_QTY)
         self.pause_qty.setChecked(fl.pause_on_qty_warning)
         self.past_date = _combo([(S.SET_PAST_DATE_CLAMP, "clamp_today"), (S.SET_PAST_DATE_ASK, "ask")],
@@ -164,7 +190,7 @@ class SettingsDialog(QDialog):
             (S.SET_TO_SITES, self.to_sites),
             (S.SET_BOL, self.bol), (S.SET_PRO, self.pro), (S.SET_PACK_CODE, self.pack_code),
             (S.SET_COMPLETE_PARTIAL, self.complete_partial), (S.SET_WEIGHT_UM, self.weight_um),
-            ("", self.click_validate), ("", self.write_back), ("", self.pause_qty),
+            ("", self.click_validate), ("", self.direct_http), ("", self.write_back), ("", self.pause_qty),
             (S.SET_PAST_DATE, self.past_date)]), S.TAB_FLOW)
         # --- AI
         ai = c.ai
@@ -219,6 +245,38 @@ class SettingsDialog(QDialog):
         lay.addWidget(buttons)
 
     # --- AI presets ---------------------------------------------------------
+
+    # ------------------------------------------------------------------ EDI login
+    def _refresh_login_status(self) -> None:
+        if not credentials.available():
+            self.login_status.setText(S.LOGIN_NO_STORE)
+            self.btn_login_save.setEnabled(False)
+        elif credentials.load() is not None:
+            self.login_status.setText(S.LOGIN_STATUS_SAVED.format(user=credentials.saved_user(),
+                                                                   store=credentials.backend_name()))
+        else:
+            self.login_status.setText(S.LOGIN_STATUS_NONE)
+
+    def save_login(self) -> None:
+        user, pwd = self.login_user.text().strip(), self.login_pwd.text()
+        if not user or not pwd:
+            self.login_status.setText(S.LOGIN_NEED_BOTH)
+            return
+        try:
+            credentials.save(user, pwd)
+        except (RuntimeError, ValueError) as ex:
+            self.login_status.setText(str(ex))
+            return
+        finally:
+            self.login_pwd.clear()          # never keep the typed password in the widget
+        self.login_pwd.setPlaceholderText(S.LOGIN_PWD_SAVED)
+        self._refresh_login_status()
+
+    def clear_login(self) -> None:
+        credentials.clear()
+        self.login_pwd.clear()
+        self.login_pwd.setPlaceholderText("")
+        self._refresh_login_status()
     def _select_matching_preset(self, provider: str, base_url: str, model: str) -> None:
         self.preset.blockSignals(True)
         sel = CUSTOM
@@ -316,6 +374,7 @@ class SettingsDialog(QDialog):
         f.weight_um = self.weight_um.text().strip()
         f.click_validate = self.click_validate.isChecked()
         f.write_back_excel = self.write_back.isChecked()
+        f.direct_http = self.direct_http.isChecked()
         f.pause_on_qty_warning = self.pause_qty.isChecked()
         f.past_date_policy = self.past_date.currentData()
         c.ai = self._ai_config()

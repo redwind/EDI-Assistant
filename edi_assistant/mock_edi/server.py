@@ -219,7 +219,7 @@ class MockServer:
         q = lambda k, d="": (query.get(k) or [d])[0]  # noqa: E731
         if method == "GET":
             sh = self._sh(q("shipment_id"))
-            order = st.orders.get(q("orderNo"))
+            order = st.orders.get(q("orderNo") or q("po_header_id"))   # real site: new_shipment.do?po_header_id=<PO line>
             return html(pages.shipment_page(st, self.options.country_options, sh, order))
         posted = {k: v[0] for k, v in form.items()}
         sh = self._sh(posted.get("shipment_id", ""))

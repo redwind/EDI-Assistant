@@ -18,6 +18,28 @@ from . import steps as S
 from .context import FlowContext
 
 MAX_ATTEMPTS = 10   # safety net against endless retry loops
+
+
+class _DirectStep(S.Step):
+    """One direct-HTTP phase shown in the step list like a normal step. Errors other than HttpFallback are
+    turned into HttpFallback so a half-sent phase is never retried blindly."""
+    retry_on_fail = False
+
+    def __init__(self, sid: str, title: str, fn, line: PlannedLine | None = None):
+        self.id, self.title_vi, self._fn, self.line, self._done = sid, title, fn, line, False
+
+    def act(self, ctx: "FlowContext") -> None:
+        from ..http.flow import HttpFallback
+        try:
+            self._fn()
+        except (HttpFallback, UserAbortError, ForbiddenActionError):
+            raise
+        except Exception as e:
+            raise HttpFallback(f"{self.id}: {e}", message_vi=getattr(e, "message_vi", "") or str(e)) from e
+        self._done = True
+
+    def check(self, ctx: "FlowContext") -> bool:
+        return self._done
 MAX_LOGIN_BOUNCES = 2   # more bounces than this within a run = the site is logging us out on purpose
 
 
@@ -137,7 +159,8 @@ class FlowRunner:
         first_of: dict[str, PlannedLine] = {}
         for ln in sh.lines:
             first_of.setdefault(ln.po_line.master_po, ln)
-        for master in sh.master_pos:
+        direct = self._direct_ok(sh)
+        for master in ([] if direct else sh.master_pos):   # direct mode: ship windows come from the tracker
             line = first_of[master]
             ctx.current_line = line
             if not (self.run_step(S.S1InboxSearch(line)) and self.run_step(S.S2OpenPODetail(line))
@@ -151,6 +174,8 @@ class FlowRunner:
             return
         self.run_step(S.S4ComputeShipDate())
         first = active[0]
+        if direct and self._run_direct(sh, first, is_last):
+            return
         ctx.current_line = first
         v = ctx.vars(first)
         on_detail = "view_order.do" in ctx.session.url() and ctx.actions.exists("po.page_marker", v, 800)
@@ -175,6 +200,83 @@ class FlowRunner:
                     self.run_step(S.S8bSetPartial(line))
                 else:
                     line.status = "skipped"
+        if any(l.status == "carton_done" for l in sh.lines):
+            self.run_step(S.S9EnterWeights())
+        self.run_step(S.S10FinishShipment(is_last))
+        sh.status = "done"
+        ctx.results.write(ctx.plan)
+
+    # ------------------------------------------------------------------ direct (HTTP) mode
+    def _direct_ok(self, sh: ShipmentPlan) -> bool:
+        ctx = self.ctx
+        return (getattr(ctx.config.flow, "direct_http", False) and not ctx.plan.dry_run
+                and sh.dates_source == "excel" and all(m in sh.po_windows for m in sh.master_pos)
+                and ctx.session.context is not None)
+
+    def _run_direct(self, sh: ShipmentPlan, first: PlannedLine, is_last: bool) -> bool:
+        """True when the shipment was finished directly. False = header not saved: run the browser steps from the
+        start. A stop after the header continues in the browser from the page where direct mode stopped."""
+        from ..http.flow import HttpFallback, HttpShipment
+        ctx = self.ctx
+        hs = HttpShipment(ctx)
+        try:
+            if not ctx.session.url().startswith(hs.http.base.split("/gateway/")[0]):
+                ctx.session.goto("gateway/inbox.do")   # fetch() runs inside the page: it must be on the EDI site
+            self.run_step(_DirectStep("D6.header", "Fill shipment header and Save (direct)", lambda: hs.header(first)))
+            self.run_step(_DirectStep("D7.add_pos", "Add POs to the shipment (direct)", hs.add_pos))
+            for line in sh.lines:
+                if line.status == "added":
+                    ctx.current_line = line
+                    po = line.po_line.po_line_id
+                    self.run_step(_DirectStep(f"D8.carton[{po}]", f"Create carton + Partial for PO {po} (direct)",
+                                              lambda line=line: hs.carton(line), line))
+            self.run_step(_DirectStep("D9.weights", "Enter weights (direct)", hs.weights))
+        except HttpFallback as e:
+            ctx.warn(f"direct mode stopped ({e.message}); continuing in the browser")
+            if not sh.web_shipment_id:
+                return False
+            try:
+                ctx.session.goto(e.ctx.get("url") or hs.http.base + f"selected_pos.do?webshipmentId={sh.web_shipment_id}")
+            except EdiAssistantError:
+                pass
+            self._ui_tail(sh, is_last)
+            return True
+        try:   # show the result page (Validate Shipment button) in the browser
+            ctx.session.goto(hs.http.base + f"selected_pos.do?webshipmentId={sh.web_shipment_id}&action=")
+        except EdiAssistantError as e:
+            ctx.warn(f"could not open the Selected Purchase Orders page: {e.message}")
+        self.run_step(S.S10FinishShipment(is_last))
+        sh.status = "done"
+        ctx.results.write(ctx.plan)
+        return True
+
+    def _to_pos_page(self, sh: ShipmentPlan) -> None:
+        """Selected Purchase Orders page, reached the way the browser steps do (header -> 'Selected Purchase Orders >>')."""
+        ctx = self.ctx
+        if ctx.actions.exists("pos.page_marker", timeout_ms=1500) or ctx.actions.exists("carton.page_marker", timeout_ms=300):
+            return
+        if not ctx.actions.exists("ship.selected_pos_button", timeout_ms=1500):
+            ctx.session.goto(ctx.base(f"gateway/new_shipment.do?shipment_id={sh.web_shipment_id}"))
+        ctx.actions.click("ship.selected_pos_button", expect_navigation=True)
+
+    def _ui_tail(self, sh: ShipmentPlan, is_last: bool) -> None:
+        """Browser steps after the header, picking up whatever direct mode left (statuses on the lines)."""
+        ctx = self.ctx
+        if any(l.status == "pending" for l in sh.lines):
+            self.run_step(S.S7AddPurchaseOrders())   # from the header page it clicks 'Selected Purchase Orders >>' itself
+        for line in sh.lines:
+            ctx.current_line = line
+            if line.status == "added":
+                if self.run_step(S.S8CreateCarton(line)):
+                    self.run_step(S.S8bSetPartial(line))
+                else:
+                    line.status = "skipped"
+            elif line.status == "carton_saved":   # carton saved directly, Partial not yet
+                if ctx.actions.exists("carton.page_marker", timeout_ms=300):
+                    ctx.actions.click("carton.back_to_po_button", expect_navigation=True)
+                self._to_pos_page(sh)
+                if self.run_step(S.S8bSetPartial(line)):
+                    line.status = "carton_done"
         if any(l.status == "carton_done" for l in sh.lines):
             self.run_step(S.S9EnterWeights())
         self.run_step(S.S10FinishShipment(is_last))

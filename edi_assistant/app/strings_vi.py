@@ -184,6 +184,8 @@ SET_COMPLETE_PARTIAL = "Complete / Partial"
 SET_WEIGHT_UM = "Đơn vị trọng lượng"
 SET_CLICK_VALIDATE = "Bấm 'Validate Shipment' sau khi nhập (không khuyến nghị)"
 SET_CLICK_VALIDATE_HELP = "Công cụ không bao giờ bấm Submit ASN, kể cả khi bật tuỳ chọn này."
+SET_DIRECT_HTTP = "Chế độ nhanh: gửi thẳng form EDI"
+SET_DIRECT_HTTP_HELP = "Header, PO, carton, Partial và cân nặng được gửi thẳng như form của trình duyệt (cùng phiên đăng nhập), không phải bấm qua từng trang. Có gì bất thường thì chạy tiếp trên trình duyệt từ đúng trang đó. Dùng ngày giao trong tracker."
 SET_WRITE_BACK = "Ghi ASN vào bản sao Excel"
 SET_PAUSE_QTY = "Tạm dừng khi số lượng Excel khác số lượng đặt hàng"
 SET_PAST_DATE = "Khi ngày giao đã qua"
@@ -320,3 +322,16 @@ INSTANCE_OTHER_VERSION = ("EDI Assistant {running} đang chạy (ở khay hệ t
                           "Đóng phiên bản {running} và mở {version}?")
 INSTANCE_QUIT_TIMEOUT = ("EDI Assistant {running} chưa đóng. Hãy thoát nó từ biểu tượng ở khay (chuột phải > Thoát), "
                          "rồi mở lại phiên bản này.")
+
+# --- EDI login (credential store)
+TAB_LOGIN = 'Đăng nhập EDI'
+LOGIN_USER = 'User ID (email)'
+LOGIN_PWD = 'Mật khẩu'
+LOGIN_SAVE = 'Lưu đăng nhập'
+LOGIN_CLEAR = 'Xoá đăng nhập đã lưu'
+LOGIN_PWD_SAVED = '(đã lưu - nhập mật khẩu mới để thay)'
+LOGIN_HELP = 'Lưu trong kho mật khẩu của máy (Windows Credential Manager / macOS Keychain), chỉ cho tài khoản người dùng của bạn - không bao giờ nằm trong file cài đặt hay log. Sau đó công cụ tự đăng nhập, chỉ ở trang đăng nhập EDI, thử một lần; sai mật khẩu, captcha hay xác thực thêm thì để bạn tự làm.'
+LOGIN_STATUS_SAVED = 'Đã lưu đăng nhập cho {user} ({store}). Công cụ sẽ tự đăng nhập.'
+LOGIN_STATUS_NONE = 'Chưa lưu đăng nhập: bạn tự đăng nhập khi trang EDI yêu cầu.'
+LOGIN_NO_STORE = 'Máy này không có kho mật khẩu: tắt tự đăng nhập.'
+LOGIN_NEED_BOTH = 'Nhập cả User ID và mật khẩu.'

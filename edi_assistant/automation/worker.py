@@ -198,6 +198,10 @@ class AutomationWorker:
             s = self._ensure_session()
             if cmd.navigate_home:
                 s.goto("gateway/inbox.do")
+                if s.is_login_page():
+                    from .autologin import DONE, try_auto_login
+                    if try_auto_login(s) == DONE:
+                        s.goto("gateway/inbox.do")
             self._emit_state()
         elif isinstance(cmd, CloseBrowser):
             self._close_browser()

@@ -153,9 +153,17 @@ class S0EnsureLoggedIn(Step):
             if "EDI Gateway Inbox" in title:
                 return
             if "-- Login" in title or a.exists("login.password_input", timeout_ms=NEG):
+                from ..autologin import DONE, FAILED, try_auto_login
+                res = try_auto_login(s)
+                if res == DONE:
+                    ctx.info("logged in automatically (saved login)")
+                    continue
+                why = ("The saved login did not work (wrong password, captcha or extra verification). "
+                       if res == FAILED else "")
                 ctx.ask("login_required",
-                        "Please log in to EDI Gateway in the browser window (the tool never types passwords). "
-                        "When you are logged in, press Continue.", options=["continue", "abort"], step_id=self.id)
+                        why + "Please log in to EDI Gateway in the browser window, then press Continue. "
+                        "(Settings > EDI login can save your login so the tool logs in by itself.)",
+                        options=["continue", "abort"], step_id=self.id)
                 s.goto("gateway/inbox.do")
             elif "Select Profile" in title:
                 a.click("login.profile_vendor_link", ctx.vars(), expect_navigation=True)

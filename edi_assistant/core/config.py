@@ -61,6 +61,7 @@ class FlowConfig:
     tracker_weight_mode: str = "per_carton_as_is"   # "per_carton_as_is" | "total_gw"
     review_between_shipments: bool = False          # True: S10 finished_review pause after every shipment; False: one final summary pause
     to_sites: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_TO_SITES))   # Delivery Address state -> TO Site No
+    direct_http: bool = True   # fast mode: send the EDI forms directly (same login); falls back to the browser steps
     past_date_policy: str = "clamp_today"   # "clamp_today" (binding default: silently use today) | "ask" (pause, let the user type a date)
 
 
