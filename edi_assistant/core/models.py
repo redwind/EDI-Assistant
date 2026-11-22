@@ -15,11 +15,11 @@ REQUIRED_FIELDS: tuple[str, ...] = ("po", "packages", "quantity", "gross_weight"
 PROFILES: tuple[str, ...] = ("packing_list", "po_tracker")
 REQUIRED_BY_PROFILE: dict[str, tuple[str, ...]] = {
     "packing_list": REQUIRED_FIELDS,
-    "po_tracker": ("po", "line", "quantity", "pack", "gw_per_carton", "start_ship", "end_ship"),
+    "po_tracker": ("po", "line", "edi_units", "pack", "gw_per_carton", "start_ship", "end_ship"),
 }
 OPTIONAL_BY_PROFILE: dict[str, tuple[str, ...]] = {
     "packing_list": ("line", "description", "net_weight", "size"),
-    "po_tracker": ("factory", "delivery_address", "edi_units", "asn", "model_no", "description", "container"),
+    "po_tracker": ("factory", "delivery_address", "quantity", "asn", "model_no", "description", "container"),
 }
 
 

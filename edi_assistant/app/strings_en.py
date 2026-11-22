@@ -93,8 +93,8 @@ INSTALL_CHROMIUM_FAIL = "Chromium installation failed. See the Log tab or try ag
 
 # --- mapping dialog
 MAPPING_TITLE = "Excel column mapping"
-PROFILE_FIELD_LABELS = {"po_tracker": {"quantity": "Order Units", "gw_per_carton": "Gross weight (G.W.) per carton, kg"}}
-MAPPING_COMPUTED = {"po_tracker": "Cartons = Order Units ÷ Pack (computed; EDI Units is used when Order Units is empty). Weight entered on EDI = Gross weight per carton."}
+PROFILE_FIELD_LABELS = {"po_tracker": {"quantity": "Order Units (used when EDI Units is empty)", "edi_units": "EDI Units", "gw_per_carton": "Gross weight (G.W.) per carton, kg"}}
+MAPPING_COMPUTED = {"po_tracker": "Cartons = EDI Units ÷ Pack (computed; Order Units is used when EDI Units is empty). Weight entered on EDI = Gross weight per carton."}
 MAPPING_HINT = "Choose the Excel column for each field (* is required)."
 MAPPING_COL_FIELD = "Field"
 MAPPING_COL_COLUMN = "Excel column"
@@ -110,7 +110,7 @@ FIELD_LABELS = {
     "size": "Size",
     "asn": "ASN #", "model_no": "Model #", "start_ship": "EDI PO Start Ship", "end_ship": "EDI PO End Ship",
     "pack": "Pack (units per carton)", "gw_per_carton": "Gross weight per carton (kg)", "container": "Container",
-    "edi_units": "EDI Units (used when Order Units is empty)", "factory": "Factory name",
+    "edi_units": "EDI Units", "factory": "Factory name",
     "delivery_address": "Delivery Address (-> TO Site No)",
 }
 

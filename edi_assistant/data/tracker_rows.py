@@ -15,13 +15,13 @@ from .values import (parse_date_cell, parse_decimal, parse_line_cell, parse_po_c
                      to_text)
 
 # 'line' is required for the UI, but the extractor can still derive it from a 9-digit / 'PO-01' PO cell.
-_EXTRACT_REQUIRED = ("po", "quantity", "pack", "gw_per_carton", "start_ship", "end_ship")
+_EXTRACT_REQUIRED = ("po", "edi_units", "pack", "gw_per_carton", "start_ship", "end_ship")
 
 
 def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnMapping) -> RowExtraction:
     missing = [k for k in _EXTRACT_REQUIRED if mapping.columns.get(k) is None]
-    if "quantity" in missing and mapping.columns.get("edi_units") is not None:
-        missing.remove("quantity")
+    if "edi_units" in missing and mapping.columns.get("quantity") is not None:
+        missing.remove("edi_units")
     if missing:
         raise MappingIncompleteError(f"Mapping incomplete, missing: {missing}",
                                      message_vi="Required columns are not mapped: " + ", ".join(missing),
@@ -77,11 +77,12 @@ def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnM
         if not dest and master == prev_master:
             dest = prev_dest
         # numbers
-        J = parse_decimal(cell(r, "quantity"))
-        if (J is None or J == 0) and "edi_units" in cols:
-            J = parse_decimal(cell(r, "edi_units"))
-            if J is not None and J > 0 and "quantity" in cols:
-                row_flags.append(Flag("units_from_edi", f"Row {r}: Order Units empty - using EDI Units {J}", "info"))
+        # Cartons = EDI Units / Pack; Order Units only stands in when EDI Units is empty
+        J = parse_decimal(cell(r, "edi_units"))
+        if (J is None or J == 0) and "quantity" in cols:
+            J = parse_decimal(cell(r, "quantity"))
+            if J is not None and J > 0 and "edi_units" in cols:
+                row_flags.append(Flag("units_from_order", f"Row {r}: EDI Units empty - using Order Units {J}", "info"))
         fac = parse_text_or_blank(grid.get_merged(r, cols["factory"])) if "factory" in cols else ""
         if fac:
             factory_names.setdefault(" ".join(fac.lower().split()), fac)
@@ -89,7 +90,7 @@ def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnM
         T = parse_decimal(cell(r, "gw_per_carton"))
         ok = True
         if J is None or J <= 0:
-            row_flags.append(Flag("non_integer_units", f"Row {r}: Order Units unreadable", "error"))
+            row_flags.append(Flag("non_integer_units", f"Row {r}: EDI Units unreadable", "error"))
             ok = False
         if Q is None or Q <= 0:
             row_flags.append(Flag("pack_invalid", f"Row {r}: Pack unreadable or zero", "error"))
@@ -99,7 +100,7 @@ def extract_tracker_rows(grid: SheetGrid, det: HeaderDetection, mapping: ColumnM
             cartons = J / Q
             if cartons != cartons.to_integral_value():
                 row_flags.append(Flag("non_integer_units",
-                                      f"Order Units {J} not divisible by Pack {Q}", "error"))
+                                      f"EDI Units {J} not divisible by Pack {Q}", "error"))
         if T is None or T <= 0:
             row_flags.append(Flag("weight_zero", f"Gross weight per carton is zero or missing in row {r}"))
             T = Decimal(0)

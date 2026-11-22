@@ -93,8 +93,8 @@ INSTALL_CHROMIUM_FAIL = "Cài Chromium không thành công. Xem tab Nhật ký h
 
 # --- mapping dialog
 MAPPING_TITLE = "Ánh xạ cột Excel"
-PROFILE_FIELD_LABELS = {"po_tracker": {"quantity": "Order Units", "gw_per_carton": "Trọng lượng cả bì (G.W.) mỗi thùng, kg"}}
-MAPPING_COMPUTED = {"po_tracker": "Số thùng (Cartons) = Order Units ÷ Pack (tự tính; nếu Order Units trống thì dùng EDI Units). Trọng lượng nhập lên EDI = trọng lượng cả bì mỗi thùng."}
+PROFILE_FIELD_LABELS = {"po_tracker": {"quantity": "Order Units (dùng khi EDI Units trống)", "edi_units": "EDI Units", "gw_per_carton": "Trọng lượng cả bì (G.W.) mỗi thùng, kg"}}
+MAPPING_COMPUTED = {"po_tracker": "Số thùng (Cartons) = EDI Units ÷ Pack (tự tính; nếu EDI Units trống thì dùng Order Units). Trọng lượng nhập lên EDI = trọng lượng cả bì mỗi thùng."}
 MAPPING_HINT = "Chọn cột Excel tương ứng cho từng trường (* là bắt buộc)."
 MAPPING_COL_FIELD = "Trường"
 MAPPING_COL_COLUMN = "Cột Excel"
@@ -110,7 +110,7 @@ FIELD_LABELS = {
     "size": "Kích thước",
     "asn": "ASN #", "model_no": "Model #", "start_ship": "EDI PO Start Ship", "end_ship": "EDI PO End Ship",
     "pack": "Pack (số lượng mỗi thùng)", "gw_per_carton": "Trọng lượng cả bì mỗi thùng (kg)", "container": "Container",
-    "edi_units": "EDI Units (dùng khi Order Units trống)", "factory": "Tên nhà máy",
+    "edi_units": "EDI Units", "factory": "Tên nhà máy",
     "delivery_address": "Địa chỉ giao hàng (-> TO Site No)",
 }
 

@@ -35,8 +35,8 @@ class ColumnMapping:
 
     def missing_required(self) -> list[str]:
         miss = [k for k in self.required() if self.columns.get(k) is None]
-        if "quantity" in miss and self.profile == "po_tracker" and self.columns.get("edi_units") is not None:
-            miss.remove("quantity")   # tracker extracted from the PO PDF: EDI Units stands in for Order Units
+        if "edi_units" in miss and self.profile == "po_tracker" and self.columns.get("quantity") is not None:
+            miss.remove("edi_units")   # older trackers without an EDI Units column: Order Units stands in
         return miss
 
     def is_complete(self) -> bool:

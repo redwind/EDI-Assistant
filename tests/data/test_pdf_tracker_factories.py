@@ -39,7 +39,7 @@ def _extract(p):
     return m, extract_rows(g, det, m)
 
 
-def test_edi_units_used_when_order_units_empty(tmp_path):
+def test_edi_units_give_the_cartons(tmp_path):
     m, rx = _extract(_tracker(tmp_path))
     assert m.profile == "po_tracker"
     assert m.columns["edi_units"].letter == "Q" and m.columns["factory"].letter == "A"
@@ -49,10 +49,24 @@ def test_edi_units_used_when_order_units_empty(tmp_path):
     assert rx.company_text == "Ningbo Bright Max Co., Ltd"
 
 
-def test_order_units_wins_when_present(tmp_path):
+def test_edi_units_win_over_order_units(tmp_path):
+    """Cartons = EDI Units (Q) / Pack (T), whatever Order Units (L) says."""
     _, rx = _extract(_tracker(tmp_path, order_units=300))
-    assert [ln.quantity for ln in rx.lines] == [Decimal(300), Decimal(300)]
-    assert not any(f.code == "units_from_edi" for ln in rx.lines for f in ln.flags)
+    assert [(ln.quantity, ln.packages) for ln in rx.lines] == [(Decimal(600), Decimal(100)), (Decimal(600), Decimal(50))]
+    assert not any(f.code == "units_from_order" for ln in rx.lines for f in ln.flags)
+
+
+def test_order_units_used_when_edi_units_empty(tmp_path):
+    p = _tracker(tmp_path, order_units=300)
+    wb = openpyxl.load_workbook(p)
+    ws = wb["Vendor "]
+    col = HEAD.index("EDI Units") + 1
+    for r in (2, 3):
+        ws.cell(r, col).value = None
+    wb.save(p)
+    _, rx = _extract(p)
+    assert [(ln.quantity, ln.packages) for ln in rx.lines] == [(Decimal(300), Decimal(50)), (Decimal(300), Decimal(25))]
+    assert all(any(f.code == "units_from_order" for f in ln.flags) for ln in rx.lines)
 
 
 def _factories_xlsx(tmp_path, zip_code="315048"):

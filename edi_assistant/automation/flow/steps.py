@@ -622,7 +622,7 @@ class S8CreateCarton(Step):
         pl.flags += plan.flags
         if need_pause and cfg.pause_on_qty_warning:
             resp = ctx.ask("qty_mismatch",
-                           f"PO {self.po}: Excel Order Units {pl.order_units or pl.quantity}, Pack {pl.pack_qty or plan.units_per_carton} "
+                           f"PO {self.po}: Excel units {pl.order_units or pl.quantity}, Pack {pl.pack_qty or plan.units_per_carton} "
                            f"-> Cartons {pl.packages}; web Qty Ordered {ordered} {um}"
                            + (f", prepack {prepack} EA" if prepack else "")
                            + ". Qty Per Carton x Cartons Per Site must equal Qty Ordered. "
